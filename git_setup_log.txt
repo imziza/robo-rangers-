@@ -1,0 +1,36 @@
+﻿**********************
+Windows PowerShell transcript start
+Start time: 20260128235648
+Username: THINKPAD-X240-N\ALETHINOS
+RunAs User: THINKPAD-X240-N\ALETHINOS
+Configuration Name: 
+Machine: THINKPAD-X240-N (Microsoft Windows NT 10.0.22000.0)
+Host Application: C:\Windows\System32\WindowsPowerShell\v1.0\powershell.exe -ExecutionPolicy Bypass -File setup_git.ps1
+Process ID: 6036
+PSVersion: 5.1.22000.2538
+PSEdition: Desktop
+PSCompatibleVersions: 1.0, 2.0, 3.0, 4.0, 5.0, 5.1.22000.2538
+BuildVersion: 10.0.22000.2538
+CLRVersion: 4.0.30319.42000
+WSManStackVersion: 3.0
+PSRemotingProtocolVersion: 2.3
+SerializationVersion: 1.1.0.1
+**********************
+Transcript started, output file is git_setup_log.txt
+Initializing git...
+
+Adding files...
+
+Committing...
+
+Renaming branch to main...
+
+Adding remote...
+
+
+Pushing...
+
+**********************
+Windows PowerShell transcript end
+End time: 20260128235655
+**********************

@@ -1,0 +1,248 @@
+/* Teams Page Styles */
+
+.container {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+}
+
+.header {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-end;
+}
+
+.title {
+    font-family: var(--font-heading);
+    font-size: var(--text-3xl);
+    font-weight: 500;
+    color: var(--gold-primary);
+    letter-spacing: var(--tracking-wide);
+    margin-bottom: var(--space-2);
+}
+
+.subtitle {
+    color: var(--text-secondary);
+    font-size: var(--text-sm);
+}
+
+/* Stats Bar */
+.statsBar {
+    display: flex;
+    justify-content: space-between;
+    padding: var(--space-6);
+    background-color: var(--bg-card);
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--bg-elevated);
+}
+
+.statItem {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.statLabel {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+}
+
+.statValue {
+    font-family: var(--font-heading);
+    font-size: var(--text-2xl);
+    color: var(--text-primary);
+}
+
+.statStatus {
+    font-family: var(--font-heading);
+    font-size: var(--text-lg);
+    color: var(--status-stable);
+    letter-spacing: var(--tracking-widest);
+}
+
+/* Team Grid */
+.teamGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
+    gap: var(--space-6);
+}
+
+.teamCard {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+    background-color: var(--bg-darker) !important;
+    transition: transform var(--transition-base);
+}
+
+.teamCard:hover {
+    transform: translateY(-4px);
+    border-color: var(--gold-primary) !important;
+}
+
+.teamHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+}
+
+.teamIcon {
+    width: 48px;
+    height: 48px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    background-color: var(--gold-muted);
+    border-radius: var(--radius-md);
+    color: var(--gold-primary);
+}
+
+.teamIcon svg {
+    width: 24px;
+    height: 24px;
+}
+
+.roleBadge {
+    font-size: var(--text-xs);
+    color: var(--gold-primary);
+    border: 1px solid var(--gold-primary);
+    padding: 2px 8px;
+    border-radius: var(--radius-full);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wide);
+}
+
+.teamName {
+    font-family: var(--font-heading);
+    font-size: var(--text-xl);
+    color: var(--text-primary);
+    letter-spacing: var(--tracking-wide);
+}
+
+.teamDesc {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    line-height: 1.6;
+    min-height: 3.2em;
+}
+
+.teamMeta {
+    display: flex;
+    gap: var(--space-6);
+    padding: var(--space-4) 0;
+    border-top: 1px solid var(--bg-elevated);
+    border-bottom: 1px solid var(--bg-elevated);
+}
+
+.metaItem {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.metaLabel {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+}
+
+.metaValue {
+    font-size: var(--text-sm);
+    color: var(--text-primary);
+    font-weight: 600;
+}
+
+.teamFooter {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    margin-top: auto;
+}
+
+.activityLabel {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+}
+
+/* Modal */
+.modalOverlay {
+    position: fixed;
+    top: 0;
+    left: 0;
+    right: 0;
+    bottom: 0;
+    background-color: var(--bg-overlay);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: var(--z-modal);
+    backdrop-filter: blur(4px);
+}
+
+.modal {
+    background-color: var(--bg-card);
+    width: 100%;
+    max-width: 500px;
+    padding: var(--space-10);
+    border-radius: var(--radius-xl);
+    border: 1px solid var(--bg-elevated);
+    box-shadow: var(--shadow-xl);
+}
+
+.modalTitle {
+    font-family: var(--font-heading);
+    font-size: var(--text-2xl);
+    color: var(--gold-primary);
+    margin-bottom: var(--space-2);
+}
+
+.modalSubtitle {
+    font-size: var(--text-sm);
+    color: var(--text-secondary);
+    margin-bottom: var(--space-8);
+}
+
+.modalForm {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+}
+
+.textareaWrapper {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.label {
+    font-size: var(--text-xs);
+    color: var(--text-tertiary);
+    text-transform: uppercase;
+    letter-spacing: var(--tracking-wider);
+}
+
+.textarea {
+    background-color: var(--bg-input);
+    border: 1px solid var(--bg-elevated);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    color: var(--text-primary);
+    font-family: var(--font-body);
+    font-size: var(--text-sm);
+    min-height: 100px;
+    resize: vertical;
+}
+
+.textarea:focus {
+    outline: none;
+    border-color: var(--gold-primary);
+}
+
+.modalActions {
+    display: flex;
+    justify-content: flex-end;
+    gap: var(--space-4);
+    margin-top: var(--space-4);
+}
