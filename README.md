@@ -1,6 +1,6 @@
 # 🏺 Aletheon: AI-Powered Archaeological Analysis Platform
 
-[![Next.js](https://img.shields.io/badge/Next.js-16-black?logo=next.js)](https://nextjs.org/)
+[![Next.js](https://img.shields.io/badge/Next.js-15-black?logo=next.js)](https://nextjs.org/)
 [![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?logo=typescript)](https://www.typescriptlang.org/)
 [![Supabase](https://img.shields.io/badge/Supabase-Database-green?logo=supabase)](https://supabase.com/)
 [![Electron](https://img.shields.io/badge/Electron-Desktop-blue?logo=electron)](https://www.electronjs.org/)
@@ -19,13 +19,14 @@ The core repository for all digital specimens.
 - **Sync Protocol**: Secure, institutional-grade synchronization across global nodes.
 
 ### 🔬 Artifact Laboratory (AI Analysis)
-Leverage deep-neural models for high-fidelity specimen analysis.
+Leverage cutting-edge AI models for high-fidelity specimen analysis.
+- **AI Engine**: Powered by **OpenRouter (DeepSeek R1 Chimera)** for advanced reasoning and scholarly hypothesis generation.
 - **Multi-Phase Scanning**:
   1. Initializing Optical Sensors
   2. Spectrographic Signature Mapping
   3. Material Composition Identification
-  4. Global Antiquity Database Cross-Referencing
-  5. Scholarly Hypothesis Generation
+  4. Global Antiquity Database Cross-Referencing (via **Smithsonian Open Access**)
+  5. AI-Driven Scholarly Hypothesis Generation
 - **Field Observations**: Integrated stratigraphic and contextual note-taking.
 
 ### 🗺 Arch-Atlas (GIS)
@@ -38,13 +39,13 @@ Advanced geospatial visualization and excavation planning.
 ### 👥 Collaboration & Discovery
 - **Research Teams**: Manage scholarly groups and institutional permissions.
 - **Secure Messaging**: Real-time communication and artifact sharing between researchers.
-- **Discovery Engine**: Intelligent search and exploration of the global artifact database.
+- **Discovery Engine**: Intelligent search and exploration of the global artifact database, integrated with the **Smithsonian Open Access API** for comparative study.
 
 ---
 
 ## 🛠 Technology Stack
 
-- **Frontend**: [Next.js](https://nextjs.org/) 16 (App Router), [React](https://react.dev/) 19, [Framer Motion](https://www.framer.com/motion/)
+- **Frontend**: [Next.js](https://nextjs.org/) 15 (App Router), [React](https://react.dev/) 19, [Framer Motion](https://www.framer.com/motion/)
 - **Styling**: Tailwind CSS / CSS Modules
 - **Backend**: [Supabase](https://supabase.com/) (PostgreSQL, Auth, Real-time RLS)
 - **Mapping**: [MapLibre GL](https://maplibre.org/)
@@ -73,10 +74,25 @@ Advanced geospatial visualization and excavation planning.
    npm install
    ```
 
-3. **Database Setup**:
+3. **Environment Configuration**:
+   Create a `.env.local` file in the root directory and populate it with your API keys:
+   ```env
+   # Supabase
+   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
+   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
+   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+
+   # AI Analysis (OpenRouter)
+   OPENROUTER_API_KEY=your_openrouter_key
+   OPENROUTER_MODEL=tngtech/deepseek-r1t2-chimera:free
+
+   # Smithsonian Data
+   SMITHSONIAN_API_KEY=your_smithsonian_key
+   ```
+
+4. **Database Setup**:
    - Create a new project in [Supabase](https://app.supabase.com/).
    - Execute the contents of `schema.sql` in the Supabase SQL Editor.
-   - Configure your Environment Variables (see `.env.example` if available).
 
 ### Running Locally
 
