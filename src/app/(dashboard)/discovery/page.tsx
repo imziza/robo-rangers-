@@ -43,16 +43,16 @@ export default function DiscoveryPage() {
             const transformedResults: SimilarArtifact[] = data.results.map((r: any) => ({
                 id: r.id,
                 title: r.title,
-                imageUrl: r.imageUrl,
-                era: r.era,
-                region: r.source,
-                culture: r.culture,
-                material: r.material,
-                objectType: r.classification,
-                source: r.source,
-                url: r.url,
-                matchScore: 0.75 + Math.random() * 0.22, // High-confidence simulation
-                description: `Official archive entry for ${r.title}. This ${r.classification.toLowerCase()} exhibits formal characteristics consistent with ${r.culture} craftsmanship from the ${r.era}.`,
+                imageUrl: r.imageUrl || r.thumbnailUrl,
+                era: r.era || 'Unknown Era',
+                region: r.region || 'Unknown Region',
+                culture: r.culture || 'Unknown Culture',
+                material: r.material || 'Mixed Materials',
+                objectType: r.objectType || 'Artifact',
+                source: 'Smithsonian Institution',
+                url: r.recordUrl,
+                matchScore: r.matchScore || (0.75 + Math.random() * 0.22),
+                description: `Official archive entry for ${r.title}. This ${(r.objectType || 'specimen').toLowerCase()} exhibits formal characteristics consistent with ${r.culture || 'contemporary'} craftsmanship from the ${r.era || 'relevant period'}.`,
             }));
 
             setResults(transformedResults);

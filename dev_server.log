@@ -1,0 +1,25 @@
+
+> aletheon@0.1.0 dev
+> next dev
+
+▲ Next.js 16.1.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+- Environments: .env.local
+
+✓ Starting...
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+✓ Ready in 1787ms
+○ Compiling /login ...
+ GET /login 200 in 5.6s (compile: 5.0s, proxy.ts: 10ms, render: 608ms)
+ GET /login 200 in 126ms (compile: 17ms, proxy.ts: 17ms, render: 92ms)
+ GET /login 200 in 276ms (compile: 14ms, proxy.ts: 36ms, render: 225ms)
+ GET /login 200 in 226ms (compile: 19ms, proxy.ts: 21ms, render: 187ms)
+✓ Compiled in 6ms
+ GET /vault 200 in 1326ms (compile: 1062ms, proxy.ts: 46ms, render: 218ms)
+ GET /vault 200 in 440ms (compile: 118ms, proxy.ts: 9ms, render: 312ms)
+✓ Compiled in 8ms
