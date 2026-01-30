@@ -172,9 +172,11 @@ export default function AtlasPage() {
         // Filter and add markers based on era and year
         artifacts.filter(a => {
             if (a.type === 'museum') return true;
-            const matchesEra = selectedEras.length === 0 || selectedEras.some(era => a.era.toLowerCase().includes(era.toLowerCase()));
-            // Simulating year-based filtering on top of era
-            return matchesEra;
+            const currentYearEra = getEraFromYear(viewYear).toLowerCase();
+            const artifactEra = a.era.toLowerCase();
+            const matchesEra = selectedEras.length === 0 || selectedEras.some(era => artifactEra.includes(era.toLowerCase()));
+            const matchesTimeline = artifactEra.includes(currentYearEra) || artifactEra.includes('unknown');
+            return matchesEra && matchesTimeline;
         }).forEach((marker) => {
             const el = document.createElement('div');
             el.className = marker.type === 'museum' ? styles.museumMarker : styles.artifactMarker;

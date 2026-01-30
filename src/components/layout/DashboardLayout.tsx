@@ -3,6 +3,7 @@
 import { ReactNode, useState } from 'react';
 import Link from 'next/link';
 import { usePathname } from 'next/navigation';
+import { useTheme } from '@/components/ThemeProvider';
 import styles from './DashboardLayout.module.css';
 
 interface DashboardLayoutProps {
@@ -80,6 +81,7 @@ function NavIcon({ name }: { name: string }) {
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
     const pathname = usePathname();
+    const { theme, toggleTheme } = useTheme();
     const [searchQuery, setSearchQuery] = useState('');
     const [sidebarOpen, setSidebarOpen] = useState(true);
 
@@ -162,6 +164,9 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                     </nav>
 
                     <div className={styles.topBarRight}>
+                        <button onClick={toggleTheme} className={styles.notificationBtn} title="Toggle Theme">
+                            {theme === 'dark' ? '🌙' : theme === 'light' ? '☀️' : '🌌'}
+                        </button>
                         <button className={styles.notificationBtn}>
                             <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
                                 <path d="M18 8A6 6 0 006 8c0 7-3 9-3 9h18s-3-2-3-9" />
