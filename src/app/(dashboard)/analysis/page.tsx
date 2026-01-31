@@ -14,9 +14,9 @@ export default function AnalysisPage() {
     const router = useRouter();
     const searchParams = useSearchParams();
     const supabase = createSupabaseBrowserClient();
-    const [images, setImages] = useState<any[]>([]);
+    const [images, setImages] = useState<{ id: string; file: File; preview: string }[]>([]);
     const [notes, setNotes] = useState('');
-    const [location, setLocation] = useState<any>(null);
+    const [location, setLocation] = useState<{ lat: number; lng: number } | null>(null);
     const [isAnalyzing, setIsAnalyzing] = useState(false);
     const [analysisProgress, setAnalysisProgress] = useState(0);
     const [currentPhase, setCurrentPhase] = useState(0);
@@ -25,32 +25,77 @@ export default function AnalysisPage() {
         if (isAnalyzing) setCurrentPhase(Math.min(Math.floor((analysisProgress / 100) * SCAN_PHASES.length), SCAN_PHASES.length - 1));
     }, [analysisProgress, isAnalyzing]);
 
-    const handleImageUpload = (e: any) => {
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
         const files = Array.from(e.target.files || []);
-        const newImages = files.map((file: any) => ({ id: Math.random().toString(36).substr(2, 9), file, preview: URL.createObjectURL(file) }));
+        const newImages = files.map((file) => ({
+            id: Math.random().toString(36).substring(2, 11),
+            file,
+            preview: URL.createObjectURL(file)
+        }));
         setImages(prev => [...prev, ...newImages]);
     };
 
     const startAnalysis = async () => {
         if (images.length === 0) return;
-        setIsAnalyzing(true); setAnalysisProgress(0);
-        const progressInterval = setInterval(() => setAnalysisProgress(prev => prev >= 98 ? prev : prev + Math.random() * 2), 1000);
+        setIsAnalyzing(true);
+        setAnalysisProgress(0);
+
+        const progressInterval = setInterval(() => {
+            setAnalysisProgress(prev => {
+                if (prev >= 95) return prev;
+                // Deterministic-ish increment
+                const inc = 1 + (Math.sin(prev) + 1);
+                return Math.min(98, prev + inc);
+            });
+        }, 1200);
+
         try {
             const { data: { user } } = await supabase.auth.getUser();
             const imageBase64s = await Promise.all(images.map(img => new Promise<string>((resolve, reject) => {
-                const reader = new FileReader(); reader.onload = () => resolve((reader.result as string).split(',')[1]); reader.onerror = reject; reader.readAsDataURL(img.file);
+                const reader = new FileReader();
+                reader.onload = () => resolve((reader.result as string).split(',')[1]);
+                reader.onerror = reject;
+                reader.readAsDataURL(img.file);
             })));
-            const response = await fetch('/api/analyze', { method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ images: imageBase64s, notes, location, userId: user?.id }) });
+
+            const response = await fetch('/api/analyze', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({ images: imageBase64s, notes, location, userId: user?.id })
+            });
+
             const result = await response.json();
             if (response.ok) {
+                // Cache for immediate redirect
                 localStorage.setItem(`report_${result.artifactId}`, JSON.stringify(result.report));
-                const artifactData = { id: result.artifactId, title: result.report.title, classification: result.report.classification, material: result.report.materialAnalysis, era: result.report.culturalContext, status: 'stable', confidence_score: result.report.confidenceScore, image_url: result.report.image_url, created_at: new Date().toISOString() };
+
+                const artifactData = {
+                    id: result.artifactId,
+                    title: result.report.title,
+                    classification: result.report.classification,
+                    material: result.report.materialAnalysis,
+                    era: result.report.culturalContext,
+                    status: 'stable',
+                    confidence_score: result.report.confidenceScore,
+                    image_url: result.report.image_url,
+                    created_at: new Date().toISOString()
+                };
+
                 const catalog = JSON.parse(localStorage.getItem('vault_catalog') || '[]');
                 localStorage.setItem('vault_catalog', JSON.stringify([artifactData, ...catalog]));
-                clearInterval(progressInterval); setAnalysisProgress(100);
-                setTimeout(() => router.push(`/report/${result.artifactId}`), 1000);
-            } else throw new Error(result.error);
-        } catch (error: any) { alert(`Analysis Failed: ${error.message}`); setIsAnalyzing(false); clearInterval(progressInterval); }
+
+                clearInterval(progressInterval);
+                setAnalysisProgress(100);
+                setTimeout(() => router.push(`/report/${result.artifactId}`), 1500);
+            } else {
+                throw new Error(result.error || 'Unknown analysis error');
+            }
+        } catch (error: any) {
+            console.error('Analysis Protocol Failed:', error);
+            alert(`Analysis Protocol Failed: ${error.message}`);
+            setIsAnalyzing(false);
+            clearInterval(progressInterval);
+        }
     };
 
     return (
@@ -121,7 +166,13 @@ export default function AnalysisPage() {
                                         <span>{Math.round(analysisProgress)}% COMPLETE</span>
                                     </div>
                                     <div className={styles.dataStream}>
-                                        {Array(5).fill(0).map((_, i) => (
+                                        {[
+                                            'EXTRACTING SPECTRAL DATA...',
+                                            'DECONSTRUCTING MATERIAL MATRIX...',
+                                            'CROSS-REFERENCING GLOBAL ARCHIVES...',
+                                            'GENERATING SCHOLARLY HYPOTHESIS...',
+                                            'CALIBRATING CHRONOLOGICAL MARKERS...'
+                                        ].map((text, i) => (
                                             <motion.div
                                                 key={i}
                                                 initial={{ opacity: 0, x: -10 }}
@@ -129,7 +180,7 @@ export default function AnalysisPage() {
                                                 transition={{ duration: 2, repeat: Infinity, delay: i * 0.4 }}
                                                 className={styles.streamLine}
                                             >
-                                                {`> 0x${Math.random().toString(16).slice(2, 10).toUpperCase()} - EXTRACTING METADATA...`}
+                                                {`> 0x${(1000 + i).toString(16).toUpperCase()} - ${text}`}
                                             </motion.div>
                                         ))}
                                     </div>

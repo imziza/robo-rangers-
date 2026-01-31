@@ -214,20 +214,28 @@ export default function ReportPage() {
 
     return (
         <motion.div
-            initial={{ opacity: 0 }}
-            animate={{ opacity: 1 }}
+            initial={{ opacity: 0, y: 20 }}
+            animate={{ opacity: 1, y: 0 }}
             className={styles.container}
         >
+            <div className={styles.breadcrumb}>
+                <Link href="/vault">Archive</Link>
+                <span>/</span>
+                <span>Dossier {artifact.id.slice(0, 8)}</span>
+            </div>
+
             <header className={styles.header}>
-                <span className={styles.recordId}>ALETHEON SCHOLARLY ARCHIVE — OFFICAL RECORD</span>
-                <h1 className={styles.title}>{report.title}</h1>
+                <span className={styles.recordId}>ALETHEON SCHOLARLY ARCHIVE — OFFICIAL DOSSIER</span>
+                <h1 className={styles.title}>{report.title || artifact.title}</h1>
 
                 <div className={styles.metadata}>
-                    <span className={styles.confidenceBadge}>{Math.round((report.confidenceScore || 0) * 100)}% CONFIDENCE</span>
+                    <div className={styles.confidenceBadge}>
+                        {Math.round((report.confidenceScore || artifact.confidence_score || 0) * 100)}% ANALYSIS CONFIDENCE
+                    </div>
                     <span>•</span>
-                    <span>ORIGIN: {artifact.region || 'UNKNOWN'}</span>
+                    <span>ORIGIN: {report.geographicSignificance || artifact.region || 'UNDER INVESTIGATION'}</span>
                     <span>•</span>
-                    <span>ERA: {artifact.era || 'UNDER INVESTIGATION'}</span>
+                    <span>ERA: {report.culturalContext || artifact.era || 'PENDING CHRONOLOGY'}</span>
                 </div>
             </header>
 

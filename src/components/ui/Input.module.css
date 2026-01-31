@@ -56,7 +56,8 @@
 .dark .textarea {
     background-color: var(--bg-input);
     color: var(--text-primary);
-    border-color: var(--bg-elevated);
+    border-color: var(--border-color);
+    backdrop-filter: blur(4px);
 }
 
 .dark .input::placeholder,
@@ -73,7 +74,7 @@
 .dark .textarea:focus {
     outline: none;
     border-color: var(--gold-primary);
-    box-shadow: 0 0 0 3px var(--gold-muted);
+    box-shadow: 0 0 10px var(--gold-muted);
 }
 
 /* Light variant inputs */

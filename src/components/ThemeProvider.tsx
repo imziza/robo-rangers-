@@ -12,7 +12,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         } else if (typeof window !== 'undefined' && window.matchMedia('(prefers-color-scheme: light)').matches) {
             initialTheme = 'light';
         }
-        if (initialTheme !== 'dark') setThemeState(initialTheme);
+        setThemeState(initialTheme);
     }, []);
     const setTheme = (newTheme: ThemeMode) => {
         setThemeState(newTheme);

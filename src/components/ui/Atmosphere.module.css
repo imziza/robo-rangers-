@@ -15,35 +15,35 @@
 
 .nebula1 {
     position: absolute;
-    top: -10%;
+    top: -20%;
     left: -10%;
-    width: 60%;
-    height: 60%;
-    background: radial-gradient(circle, rgba(201, 162, 39, 0.05) 0%, transparent 70%);
-    filter: blur(80px);
-    animation: drift 20s ease-in-out infinite alternate;
+    width: 70%;
+    height: 70%;
+    background: radial-gradient(circle, rgba(201, 162, 39, 0.08) 0%, transparent 70%);
+    filter: blur(120px);
+    animation: drift 40s ease-in-out infinite alternate;
 }
 
 .nebula2 {
     position: absolute;
-    bottom: -10%;
+    bottom: -20%;
     right: -10%;
-    width: 50%;
-    height: 50%;
-    background: radial-gradient(circle, rgba(59, 130, 246, 0.05) 0%, transparent 70%);
-    filter: blur(80px);
-    animation: drift 25s ease-in-out infinite alternate-reverse;
+    width: 60%;
+    height: 60%;
+    background: radial-gradient(circle, rgba(59, 130, 246, 0.08) 0%, transparent 70%);
+    filter: blur(120px);
+    animation: drift 50s ease-in-out infinite alternate-reverse;
 }
 
 .nebula3 {
     position: absolute;
-    top: 30%;
-    left: 40%;
-    width: 40%;
-    height: 40%;
-    background: radial-gradient(circle, rgba(139, 92, 246, 0.03) 0%, transparent 70%);
-    filter: blur(80px);
-    animation: drift 30s ease-in-out infinite alternate;
+    top: 20%;
+    left: 30%;
+    width: 50%;
+    height: 50%;
+    background: radial-gradient(circle, rgba(139, 92, 246, 0.05) 0%, transparent 70%);
+    filter: blur(120px);
+    animation: drift 60s ease-in-out infinite alternate;
 }
 
 @keyframes drift {
