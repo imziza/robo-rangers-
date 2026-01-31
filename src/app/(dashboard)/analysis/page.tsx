@@ -2,6 +2,7 @@
 import { useState, useCallback, useEffect } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
+import { Camera, FileText, Upload, Microscope } from 'lucide-react';
 import { createSupabaseBrowserClient } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Textarea } from '@/components/ui/Input';
@@ -60,13 +61,79 @@ export default function AnalysisPage() {
                     <AnimatePresence mode="wait">
                         {!isAnalyzing ? (
                             <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} exit={{ opacity: 0, scale: 0.95 }} className={styles.inputStack}>
-                                <section className={styles.section}><h2 className={styles.sectionTitle}>01 OPTICAL CAPTURE</h2><div className={styles.uploadArea}><input type="file" multiple accept="image/*" onChange={handleImageUpload} className={styles.fileInput} />INGEST SPECIMEN IMAGERY</div></section>
-                                <section className={styles.section}><h2 className={styles.sectionTitle}>02 FIELD OBSERVATIONS</h2><Textarea placeholder="INPUT STRATIGRAPHIC OBSERVATIONS..." value={notes} onChange={(e) => setNotes(e.target.value)} variant="dark" /></section>
-                                <Button variant="primary" fullWidth disabled={images.length === 0} onClick={startAnalysis}>EXECUTE ANALYSIS</Button>
+                                <section className={styles.section}>
+                                    <h2 className={styles.sectionTitle}>
+                                        <Camera size={16} className={styles.inlineIcon} />
+                                        01 OPTICAL CAPTURE
+                                    </h2>
+                                    <div className={styles.uploadArea}>
+                                        <input type="file" multiple accept="image/*" onChange={handleImageUpload} className={styles.fileInput} />
+                                        <div className={styles.uploadLabel}>
+                                            <div className={styles.uploadIcon}>
+                                                <Upload size={32} />
+                                            </div>
+                                            <span className={styles.uploadText}>INGEST SPECIMEN IMAGERY</span>
+                                            <span className={styles.uploadHint}>Drag and drop or click to browse</span>
+                                        </div>
+                                    </div>
+                                </section>
+                                <section className={styles.section}>
+                                    <h2 className={styles.sectionTitle}>
+                                        <FileText size={16} className={styles.inlineIcon} />
+                                        02 FIELD OBSERVATIONS
+                                    </h2>
+                                    <Textarea placeholder="INPUT STRATIGRAPHIC OBSERVATIONS..." value={notes} onChange={(e) => setNotes(e.target.value)} variant="dark" />
+                                </section>
+                                <Button
+                                    variant="primary"
+                                    fullWidth
+                                    disabled={images.length === 0}
+                                    onClick={startAnalysis}
+                                    leftIcon={<Microscope size={18} />}
+                                >
+                                    EXECUTE ANALYSIS
+                                </Button>
                             </motion.div>
                         ) : (
                             <motion.div initial={{ opacity: 0 }} animate={{ opacity: 1 }} className={styles.scanningWrapper}>
-                                <div className={styles.scanningMeta}><h3 className={styles.phaseLabel}>{SCAN_PHASES[currentPhase]}</h3><div className={styles.progressBar}><div className={styles.progressFill} style={{ width: `${analysisProgress}%` }} /></div></div>
+                                <div className={styles.scannerDisk}>
+                                    <div className={styles.scanLine} />
+                                    <Microscope size={48} className={styles.scanningIcon} />
+                                    <svg className={styles.scannerRing} viewBox="0 0 100 100">
+                                        <circle cx="50" cy="50" r="48" fill="none" stroke="currentColor" strokeWidth="1" strokeDasharray="10 5" />
+                                    </svg>
+                                </div>
+                                <div className={styles.scanningMeta}>
+                                    <div className={styles.terminalHeader}>
+                                        <span className={styles.terminalDot} />
+                                        <span className={styles.terminalTitle}>ANALYSIS IN PROGRESS</span>
+                                    </div>
+                                    <h3 className={styles.phaseLabel}>PHASE {currentPhase + 1}: {SCAN_PHASES[currentPhase]}</h3>
+                                    <div className={styles.progressBar}>
+                                        <motion.div
+                                            className={styles.progressFill}
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${analysisProgress}%` }}
+                                        />
+                                    </div>
+                                    <div className={styles.progressStats}>
+                                        <span>SIGNAL: SECURE</span>
+                                        <span>{Math.round(analysisProgress)}% COMPLETE</span>
+                                    </div>
+                                    <div className={styles.dataStream}>
+                                        {Array(5).fill(0).map((_, i) => (
+                                            <motion.div
+                                                key={i}
+                                                initial={{ opacity: 0, x: -10 }}
+                                                animate={{ opacity: [0, 1, 0], x: 0 }}
+                                                transition={{ duration: 2, repeat: Infinity, delay: i * 0.4 }}
+                                                className={styles.streamLine}
+                                            >
+                                                {`> 0x${Math.random().toString(16).slice(2, 10).toUpperCase()} - EXTRACTING METADATA...`}
+                                            </motion.div>
+                                        ))}
+                                    </div>
+                                </div>
                             </motion.div>
                         )}
                     </AnimatePresence>

@@ -26,7 +26,11 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
     };
     useEffect(() => {
         document.documentElement.setAttribute('data-theme', theme);
-        document.body.className = `theme-${theme}`;
+        document.body.setAttribute('data-theme', theme);
+        // Remove all theme classes first
+        const themeClasses = ['theme-light', 'theme-dark', 'theme-ambient'];
+        document.body.classList.remove(...themeClasses);
+        document.body.classList.add(`theme-${theme}`);
     }, [theme]);
     return (
         <ThemeContext.Provider value={{ theme, setTheme, toggleTheme }}>

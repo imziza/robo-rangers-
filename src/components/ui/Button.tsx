@@ -1,6 +1,8 @@
 'use client';
 
-import { forwardRef, ButtonHTMLAttributes } from 'react';
+import { forwardRef, ButtonHTMLAttributes, ReactNode } from 'react';
+import { motion, HTMLMotionProps } from 'framer-motion';
+import { Loader2 } from 'lucide-react';
 import styles from './Button.module.css';
 
 export interface ButtonProps extends ButtonHTMLAttributes<HTMLButtonElement> {
@@ -39,33 +41,27 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             .filter(Boolean)
             .join(' ');
 
+        // Filter out props that conflict with framer-motion
+        const { onAnimationStart, onDragStart, onDragEnd, onDrag, ...safeProps } = props as any;
+
         return (
-            <button
-                ref={ref}
+            <motion.button
+                ref={ref as any}
                 className={buttonClasses}
                 disabled={disabled || isLoading}
-                {...props}
+                whileHover={{ scale: 1.02 }}
+                whileTap={{ scale: 0.98 }}
+                {...safeProps}
             >
                 {isLoading && (
                     <span className={styles.spinner}>
-                        <svg viewBox="0 0 24 24" fill="none" xmlns="http://www.w3.org/2000/svg">
-                            <circle
-                                cx="12"
-                                cy="12"
-                                r="10"
-                                stroke="currentColor"
-                                strokeWidth="3"
-                                strokeLinecap="round"
-                                strokeDasharray="31.416"
-                                strokeDashoffset="10"
-                            />
-                        </svg>
+                        <Loader2 size={16} />
                     </span>
                 )}
                 {leftIcon && !isLoading && <span className={styles.icon}>{leftIcon}</span>}
                 <span className={styles.label}>{children}</span>
                 {rightIcon && !isLoading && <span className={styles.icon}>{rightIcon}</span>}
-            </button>
+            </motion.button>
         );
     }
 );

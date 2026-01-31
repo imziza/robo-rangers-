@@ -6,6 +6,17 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { createSupabaseBrowserClient } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
+import {
+    Layers,
+    Grid3X3,
+    FileText,
+    MapPin,
+    Radio,
+    Landmark,
+    Circle,
+    Navigation,
+    LocateFixed
+} from 'lucide-react';
 import styles from './page.module.css';
 
 interface ArtifactMarker {
@@ -181,8 +192,8 @@ export default function AtlasPage() {
             const el = document.createElement('div');
             el.className = marker.type === 'museum' ? styles.museumMarker : styles.artifactMarker;
             el.innerHTML = marker.type === 'museum'
-                ? '<svg viewBox="0 0 24 24" fill="currentColor"><path d="M12 2L2 7l10 5 10-5-10-5z"/><path d="M2 17l10 5 10-5M2 12l10 5 10-5"/></svg>'
-                : '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="8"/></svg>';
+                ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7 12 2"/></svg>'
+                : '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg>';
 
             // Hover interactions
             el.addEventListener('mouseenter', () => {
@@ -279,7 +290,7 @@ export default function AtlasPage() {
 
                 const el = document.createElement('div');
                 el.className = styles.planningMarker;
-                el.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2"><path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0118 0z"/><circle cx="12" cy="10" r="3"/></svg>';
+                el.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>';
 
                 planningMarkerRef.current = new maplibregl.Marker({ element: el })
                     .setLngLat(e.lngLat)
@@ -344,7 +355,7 @@ export default function AtlasPage() {
             <aside className={styles.sidebar}>
                 <div className={styles.sidebarSection}>
                     <h3 className={styles.sectionTitle}>
-                        <span className={styles.sectionIcon}>🗺</span>
+                        <span className={styles.sectionIcon}><Navigation size={14} /></span>
                         ATLAS TOOLS
                     </h3>
 
@@ -355,7 +366,7 @@ export default function AtlasPage() {
                                 checked={layersVisible.mapLayers}
                                 onChange={() => toggleLayer('mapLayers')}
                             />
-                            <span className={styles.toolIcon}>🗂</span>
+                            <span className={styles.toolIcon}><Layers size={16} /></span>
                             Map Layers
                         </label>
 
@@ -365,7 +376,7 @@ export default function AtlasPage() {
                                 checked={layersVisible.coordinateGrid}
                                 onChange={() => toggleLayer('coordinateGrid')}
                             />
-                            <span className={styles.toolIcon}>📐</span>
+                            <span className={styles.toolIcon}><Grid3X3 size={16} /></span>
                             Coordinate Grid
                         </label>
 
@@ -375,7 +386,7 @@ export default function AtlasPage() {
                                 checked={layersVisible.fieldNotes}
                                 onChange={() => toggleLayer('fieldNotes')}
                             />
-                            <span className={styles.toolIcon}>📝</span>
+                            <span className={styles.toolIcon}><FileText size={16} /></span>
                             Field Notes
                         </label>
                     </div>
@@ -428,14 +439,7 @@ export default function AtlasPage() {
 
                 <div className={styles.gpsStatus}>
                     <div className={`${styles.gpsIndicator} ${gpsGranted ? styles.granted : ''}`}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="12" cy="12" r="10" />
-                            <circle cx="12" cy="12" r="3" />
-                            <line x1="12" y1="2" x2="12" y2="4" />
-                            <line x1="12" y1="20" x2="12" y2="22" />
-                            <line x1="2" y1="12" x2="4" y2="12" />
-                            <line x1="20" y1="12" x2="22" y2="12" />
-                        </svg>
+                        <LocateFixed size={16} strokeWidth={2} />
                         GPS: {gpsGranted ? 'PERMISSION GRANTED' : 'AWAITING PERMISSION'}
                     </div>
                 </div>
@@ -510,7 +514,7 @@ export default function AtlasPage() {
             {/* Bottom Stats Bar */}
             <footer className={styles.statsBar}>
                 <div className={styles.statGroup}>
-                    <span className={styles.statIcon}>📡</span>
+                    <span className={styles.statIcon}><Radio size={18} /></span>
                     <div className={styles.statContent}>
                         <span className={styles.statLabel}>SIGNAL STRENGTH</span>
                         <span className={styles.statValue}>{signalStrength}</span>

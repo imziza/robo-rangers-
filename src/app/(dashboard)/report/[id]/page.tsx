@@ -4,6 +4,7 @@ import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion } from 'framer-motion';
+import { FileText, Search, Share2, Printer, Compass, Shield } from 'lucide-react';
 import { createSupabaseBrowserClient } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import styles from './page.module.css';
@@ -217,12 +218,6 @@ export default function ReportPage() {
             animate={{ opacity: 1 }}
             className={styles.container}
         >
-            <nav className={styles.breadcrumb}>
-                <Link href="/vault">PRESERVATION VAULT</Link>
-                <span>/</span>
-                <span>CATALOG ID: {artifact.id.split('-')[0].toUpperCase()}</span>
-            </nav>
-
             <header className={styles.header}>
                 <span className={styles.recordId}>ALETHEON SCHOLARLY ARCHIVE — OFFICAL RECORD</span>
                 <h1 className={styles.title}>{report.title}</h1>
@@ -243,11 +238,8 @@ export default function ReportPage() {
                             <img src={artifact.image_url} alt={report.title} />
                         ) : (
                             <>
-                                <svg viewBox="0 0 100 100" fill="none" stroke="currentColor" strokeWidth="0.2" style={{ width: '80%', opacity: 0.1 }}>
-                                    <circle cx="50" cy="50" r="45" />
-                                    <path d="M50 5 L50 95 M5 50 L95 50" />
-                                </svg>
-                                <div style={{ position: 'absolute', bottom: '20px', fontSize: '10px', color: 'var(--gold-muted)' }}>OPTICAL SCAN V.4.2</div>
+                                <Shield size={120} strokeWidth={0.5} style={{ opacity: 0.1 }} />
+                                <div style={{ position: 'absolute', bottom: '20px', fontSize: '10px', color: 'var(--gold-muted)', letterSpacing: '2px' }}>OPTICAL SCAN V.4.2</div>
                             </>
                         )}
                     </div>
@@ -324,13 +316,34 @@ export default function ReportPage() {
             <aside className={styles.sidebar}>
                 <div className={styles.sidebarAction}>
                     <span className={styles.sidebarHeading}>ARCHIVAL MANAGEMENT</span>
-                    <Button variant="primary" fullWidth onClick={() => window.print()}>EXPORT OFFICIAL DOSSIER</Button>
-                    <Button variant="outline" fullWidth onClick={() => router.push('/discovery')}>FIND SIMILAR ARTIFACTS</Button>
+                    <Button
+                        variant="primary"
+                        fullWidth
+                        onClick={() => window.print()}
+                        leftIcon={<Printer size={16} />}
+                    >
+                        EXPORT OFFICIAL DOSSIER
+                    </Button>
+                    <Button
+                        variant="outline"
+                        fullWidth
+                        onClick={() => router.push('/discovery')}
+                        leftIcon={<Compass size={16} />}
+                    >
+                        FIND SIMILAR ARTIFACTS
+                    </Button>
                 </div>
 
                 <div className={styles.sidebarAction}>
                     <span className={styles.sidebarHeading}>COLLABORATION</span>
-                    <Button variant="secondary" fullWidth onClick={shareReport}>SHARE WITH RESEARCH GROUP</Button>
+                    <Button
+                        variant="secondary"
+                        fullWidth
+                        onClick={shareReport}
+                        leftIcon={<Share2 size={16} />}
+                    >
+                        SHARE WITH RESEARCH GROUP
+                    </Button>
                 </div>
             </aside>
         </motion.div>

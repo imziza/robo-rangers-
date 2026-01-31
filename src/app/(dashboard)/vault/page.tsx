@@ -32,7 +32,7 @@ export default function VaultPage() {
             if (error) throw error;
             const dbArtifacts = (data || []).map(d => ({ ...d, images: d.artifact_images || [] }));
             const localCatalog = JSON.parse(localStorage.getItem('vault_catalog') || '[]');
-            const localArtifacts = localCatalog.filter((la: Artifact) => !dbArtifacts.find(da => da.id === la.id)).map((la: any) => ({ ...la, images: la.image_url ? [{ image_url: la.image_url, is_primary: true }] : [] }));
+            const localArtifacts = localCatalog.filter((la: Artifact) => !dbArtifacts.find(da => da.id === la.id)).map((la: Artifact & { image_url?: string }) => ({ ...la, images: la.image_url ? [{ image_url: la.image_url, is_primary: true }] : [] }));
             const combined = [...localArtifacts, ...dbArtifacts];
             setArtifacts(combined);
             if (combined.length > 0) setSelectedArtifact(combined[0]);

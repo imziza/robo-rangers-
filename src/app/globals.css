@@ -22,6 +22,11 @@
   --space-1: 0.2rem; --space-2: 0.4rem; --space-3: 0.6rem; --space-4: 0.8rem; --space-5: 1rem; --space-6: 1.2rem; --space-8: 1.6rem; --space-10: 2rem; --space-12: 2.5rem; --space-16: 3rem; --space-20: 4rem;
   --transition-fast: 100ms ease; --transition-base: 150ms ease; --transition-slow: 250ms ease;
   --z-base: 0; --z-elevated: 10; --z-dropdown: 100; --z-sticky: 500; --z-modal: 1000;
+
+  /* Ambient Specific */
+  --ambient-glow: 0 0 15px var(--gold-glow);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.08);
+  --glass-shadow: 0 8px 32px 0 rgba(0, 0, 0, 0.37);
 }
 
 [data-theme='dark'], :root {
@@ -37,14 +42,38 @@
 }
 
 [data-theme='ambient'] {
-  --bg-main: #05070A; --bg-darker: #020305; --bg-card: rgba(13, 17, 23, 0.7); --bg-card-hover: rgba(22, 27, 34, 0.8); --bg-elevated: rgba(30, 35, 45, 0.7); --bg-input: rgba(1, 4, 9, 0.8); --bg-overlay: rgba(0, 0, 0, 0.85);
-  --text-primary: #E6EDF3; --text-secondary: #9198A1; --text-tertiary: #7D8590; --text-muted: #484F58;
-  --border-color: rgba(48, 54, 61, 0.5); --shadow-color: rgba(0, 0, 0, 0.6); --glass-bg: rgba(13, 17, 23, 0.6);
+  --bg-main: #0A0F1A; --bg-darker: #05080F; --bg-card: rgba(15, 23, 42, 0.4); --bg-card-hover: rgba(30, 41, 59, 0.5); --bg-elevated: rgba(51, 65, 85, 0.4); --bg-input: rgba(15, 23, 42, 0.6); --bg-overlay: rgba(2, 6, 23, 0.8);
+  --text-primary: #F8FAFC; --text-secondary: #CBD5E1; --text-tertiary: #94A3B8; --text-muted: #475569;
+  --border-color: rgba(201, 162, 39, 0.2); --shadow-color: rgba(0, 0, 0, 0.4); --glass-bg: rgba(15, 23, 42, 0.6);
+  --accent-glow: 0 0 20px rgba(201, 162, 39, 0.3);
 }
 
 body {
   background-color: var(--bg-main); color: var(--text-primary); font-family: var(--font-body);
   transition: background-color var(--transition-slow), color var(--transition-slow);
+  min-height: 100vh;
+  overflow-x: hidden;
+}
+
+/* Animations */
+@keyframes float {
+  0% { transform: translateY(0px); }
+  50% { transform: translateY(-10px); }
+  100% { transform: translateY(0px); }
+}
+
+@keyframes pulse-glow {
+  0% { box-shadow: 0 0 5px var(--gold-muted); }
+  50% { box-shadow: 0 0 20px var(--gold-glow); }
+  100% { box-shadow: 0 0 5px var(--gold-muted); }
+}
+
+.ambient-float {
+  animation: float 6s ease-in-out infinite;
+}
+
+.ambient-glow {
+  animation: pulse-glow 4s ease-in-out infinite;
 }
 * { box-sizing: border-box; margin: 0; padding: 0; }
 h1, h2, h3, h4 { font-family: var(--font-heading); font-weight: 500; }

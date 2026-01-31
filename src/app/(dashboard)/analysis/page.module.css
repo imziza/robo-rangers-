@@ -71,6 +71,11 @@
     text-transform: uppercase;
 }
 
+.inlineIcon {
+    color: var(--gold-primary);
+    opacity: 0.8;
+}
+
 .stepNumber {
     color: var(--gold-primary);
     font-weight: 700;
@@ -277,15 +282,71 @@
     padding: var(--space-10) 0;
 }
 
-.scannerDisk {
-    width: 150px;
-    height: 150px;
+.scanningMeta {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-6);
+    width: 100%;
+    max-width: 500px;
+}
+
+.terminalHeader {
+    display: flex;
+    align-items: center;
+    gap: var(--space-2);
+    margin-bottom: var(--space-2);
+}
+
+.terminalDot {
+    width: 6px;
+    height: 6px;
     border-radius: 50%;
-    border: 2px solid var(--gold-muted);
+    background-color: var(--gold-primary);
+    box-shadow: 0 0 8px var(--gold-primary);
+    animation: blink 1s infinite;
+}
+
+@keyframes blink {
+    0%, 100% { opacity: 1; }
+    50% { opacity: 0.3; }
+}
+
+.terminalTitle {
+    font-size: 10px;
+    font-weight: 700;
+    letter-spacing: 2px;
+    color: var(--gold-primary);
+}
+
+.scannerDisk {
+    width: 200px;
+    height: 200px;
+    border-radius: 50%;
+    border: 1px solid var(--gold-muted);
     position: relative;
     display: flex;
     align-items: center;
     justify-content: center;
+    background: radial-gradient(circle, var(--gold-muted) 0%, transparent 70%);
+}
+
+.scanningIcon {
+    color: var(--gold-primary);
+    filter: drop-shadow(0 0 10px var(--gold-primary));
+}
+
+.scannerRing {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    color: var(--gold-muted);
+    animation: rotate 10s linear infinite;
+}
+
+@keyframes rotate {
+    from { transform: rotate(0deg); }
+    to { transform: rotate(360deg); }
 }
 
 .scanLine {
@@ -335,6 +396,34 @@
     font-size: var(--text-sm);
     color: var(--gold-primary);
     letter-spacing: var(--tracking-widest);
+}
+
+.progressStats {
+    display: flex;
+    justify-content: space-between;
+    width: 100%;
+    font-size: 10px;
+    color: var(--text-tertiary);
+    letter-spacing: 1px;
+}
+
+.dataStream {
+    background-color: var(--bg-darker);
+    border: 1px solid var(--bg-elevated);
+    border-radius: var(--radius-md);
+    padding: var(--space-4);
+    height: 120px;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-1);
+}
+
+.streamLine {
+    font-family: monospace;
+    font-size: 10px;
+    color: var(--gold-muted);
+    white-space: nowrap;
 }
 
 .disclaimer {

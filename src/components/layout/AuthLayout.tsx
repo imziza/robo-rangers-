@@ -2,6 +2,7 @@
 
 import { ReactNode } from 'react';
 import Link from 'next/link';
+import { Sparkles } from 'lucide-react';
 import styles from './AuthLayout.module.css';
 
 interface AuthLayoutProps {
@@ -14,10 +15,7 @@ export function AuthLayout({ children }: AuthLayoutProps) {
             {/* Header */}
             <header className={styles.header}>
                 <Link href="/" className={styles.logo}>
-                    <svg width="32" height="32" viewBox="0 0 32 32" fill="none">
-                        <circle cx="16" cy="16" r="14" stroke="#C9A227" strokeWidth="2" />
-                        <circle cx="16" cy="16" r="6" fill="#C9A227" />
-                    </svg>
+                    <Sparkles size={32} strokeWidth={1.5} color="#C9A227" />
                     <span className={styles.logoText}>ALETHEON</span>
                 </Link>
 

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Users, Plus, Shield, Search, ExternalLink } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
@@ -60,11 +61,7 @@ export default function TeamsPage() {
                 <Button
                     variant="primary"
                     onClick={() => setShowCreateModal(true)}
-                    leftIcon={
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <path d="M12 5v14M5 12h14" />
-                        </svg>
-                    }
+                    leftIcon={<Plus size={20} strokeWidth={2} />}
                 >
                     Initialize New Group
                 </Button>
@@ -94,12 +91,7 @@ export default function TeamsPage() {
                     <Card key={team.id} className={styles.teamCard} variant="bordered">
                         <div className={styles.teamHeader}>
                             <div className={styles.teamIcon}>
-                                <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                                    <path d="M17 21v-2a4 4 0 00-3-3.87" />
-                                    <path d="M9 21v-2a4 4 0 00-3-3.87" />
-                                    <circle cx="9" cy="7" r="4" />
-                                    <circle cx="17" cy="7" r="4" />
-                                </svg>
+                                <Users size={24} strokeWidth={1.5} />
                             </div>
                             <span className={styles.roleBadge}>{team.role}</span>
                         </div>
@@ -120,7 +112,13 @@ export default function TeamsPage() {
 
                         <div className={styles.teamFooter}>
                             <span className={styles.activityLabel}>Active {team.lastActivity}</span>
-                            <Button variant="outline" size="sm">Enter Repository</Button>
+                            <Button
+                                variant="outline"
+                                size="sm"
+                                rightIcon={<ExternalLink size={14} />}
+                            >
+                                Enter Repository
+                            </Button>
                         </div>
                     </Card>
                 ))}
