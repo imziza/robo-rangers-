@@ -3,11 +3,13 @@
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { motion } from 'framer-motion';
+import { motion, AnimatePresence } from 'framer-motion';
 import { createSupabaseBrowserClient } from '@/lib/supabase';
+import { AlertCircle, ShieldCheck } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { AuthLayout } from '@/components/layout/AuthLayout';
+import { LivingLightBackground } from '@/components/ui/LivingLightBackground';
 import styles from './page.module.css';
 
 export default function LoginPage() {
@@ -18,6 +20,7 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
+    const [isTyping, setIsTyping] = useState(false);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -52,9 +55,24 @@ export default function LoginPage() {
 
     return (
         <AuthLayout>
+            <LivingLightBackground />
+
+            {/* Typing Reaction Pulse */}
+            <AnimatePresence>
+                {isTyping && (
+                    <motion.div
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                        className="fixed inset-0 pointer-events-none z-[-1] bg-gold-500/5 transition-colors duration-1000"
+                    />
+                )}
+            </AnimatePresence>
+
             <motion.div
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
+                initial={{ opacity: 0, scale: 0.95 }}
+                animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                 className={styles.card}
             >
                 <div className={styles.header}>
@@ -63,28 +81,60 @@ export default function LoginPage() {
                 </div>
 
                 <form className={styles.form} onSubmit={handleLogin}>
-                    <Input
-                        label="INSTITUTIONAL EMAIL"
-                        type="email"
-                        placeholder="researcher@institution.edu"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        required
-                        variant="dark"
-                        className={styles.input}
-                    />
-
-                    <div className={styles.passwordWrapper}>
+                    <div className="relative">
                         <Input
-                            label="ACCESS KEY"
-                            type="password"
-                            placeholder="••••••••"
-                            value={password}
-                            onChange={(e) => setPassword(e.target.value)}
+                            label="INSTITUTIONAL EMAIL"
+                            type="email"
+                            placeholder="researcher@institution.edu"
+                            value={email}
+                            onChange={(e) => {
+                                setEmail(e.target.value);
+                                setIsTyping(true);
+                                setTimeout(() => setIsTyping(false), 1000);
+                            }}
+                            onFocus={() => setIsTyping(true)}
+                            onBlur={() => setIsTyping(false)}
                             required
                             variant="dark"
                             className={styles.input}
                         />
+                        {isTyping && (
+                            <motion.div
+                                layoutId="pulse"
+                                className="absolute -inset-1 border border-gold-500/20 rounded-lg pointer-events-none"
+                                animate={{ opacity: [0, 0.5, 0], scale: [1, 1.05, 1] }}
+                                transition={{ duration: 2, repeat: Infinity }}
+                            />
+                        )}
+                    </div>
+
+                    <div className={styles.passwordWrapper}>
+                        <div className="relative">
+                            <Input
+                                label="ACCESS KEY"
+                                type="password"
+                                placeholder="••••••••"
+                                value={password}
+                                onChange={(e) => {
+                                    setPassword(e.target.value);
+                                    setIsTyping(true);
+                                    setTimeout(() => setIsTyping(false), 1000);
+                                }}
+                                onFocus={() => setIsTyping(true)}
+                                onBlur={() => setIsTyping(false)}
+                                required
+                                variant="dark"
+                                className={styles.input}
+                            />
+                            {isTyping && (
+                                <motion.div
+                                    layoutId="pulse"
+                                    className="absolute -inset-1 border border-gold-500/20 rounded-lg pointer-events-none"
+                                    animate={{ opacity: [0, 0.5, 0], scale: [1, 1.05, 1] }}
+                                    transition={{ duration: 2, repeat: Infinity }}
+                                />
+                            )}
+                        </div>
                         <Link href="/forgot-password" className={styles.forgotLink}>
                             FORGOT ACCESS KEY?
                         </Link>
@@ -96,7 +146,7 @@ export default function LoginPage() {
                             animate={{ opacity: 1, scale: 1 }}
                             className={styles.error}
                         >
-                            <span className={styles.errorIcon}>⚠</span>
+                            <AlertCircle size={16} className={styles.errorIcon} />
                             {error}
                         </motion.div>
                     )}
@@ -107,6 +157,7 @@ export default function LoginPage() {
                         fullWidth
                         isLoading={isLoading}
                         className={styles.submitBtn}
+                        leftIcon={<ShieldCheck size={18} />}
                     >
                         AUTHORIZE ACCESS
                     </Button>

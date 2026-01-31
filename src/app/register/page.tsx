@@ -8,6 +8,8 @@ import { createSupabaseBrowserClient } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Input } from '@/components/ui/Input';
 import { AuthLayout } from '@/components/layout/AuthLayout';
+import { SecurityShield } from '@/components/ui/SecurityShield';
+import { LivingLightBackground } from '@/components/ui/LivingLightBackground';
 import styles from './page.module.css';
 
 enum RegisterStep {
@@ -33,9 +35,22 @@ export default function RegisterPage() {
         password: '',
         confirmPassword: '',
     });
+    const [isTyping, setIsTyping] = useState(false);
 
     const updateField = (field: string, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
+        setIsTyping(true);
+        setTimeout(() => setIsTyping(false), 1000);
+    };
+
+    const getPasswordStrength = (pass: string) => {
+        if (!pass) return -1;
+        let strength = 0;
+        if (pass.length > 6) strength++;
+        if (pass.length > 10) strength++;
+        if (/[A-Z]/.test(pass)) strength++;
+        if (/[0-9!@#$%^&*]/.test(pass)) strength++;
+        return strength as 0 | 1 | 2 | 3 | 4;
     };
 
     const handleNext = () => {
@@ -95,9 +110,12 @@ export default function RegisterPage() {
 
     return (
         <AuthLayout>
+            <LivingLightBackground />
+
             <motion.div
-                initial={{ opacity: 0, scale: 0.98 }}
+                initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
+                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
                 className={styles.card}
             >
                 {/* Stepper Header */}
@@ -207,6 +225,8 @@ export default function RegisterPage() {
                                 exit={{ opacity: 0, x: -20 }}
                                 className={styles.stepContent}
                             >
+                                <SecurityShield strength={getPasswordStrength(formData.password)} />
+
                                 <Input
                                     label="INSTITUTIONAL EMAIL"
                                     type="email"
@@ -216,15 +236,25 @@ export default function RegisterPage() {
                                     variant="dark"
                                     required
                                 />
-                                <Input
-                                    label="NEW ACCESS KEY"
-                                    type="password"
-                                    value={formData.password}
-                                    onChange={(e) => updateField('password', e.target.value)}
-                                    placeholder="••••••••"
-                                    variant="dark"
-                                    required
-                                />
+                                <div className="relative">
+                                    <Input
+                                        label="NEW ACCESS KEY"
+                                        type="password"
+                                        value={formData.password}
+                                        onChange={(e) => updateField('password', e.target.value)}
+                                        placeholder="••••••••"
+                                        variant="dark"
+                                        required
+                                    />
+                                    {isTyping && (
+                                        <motion.div
+                                            className="absolute bottom-0 left-0 h-0.5 bg-gold-500/50"
+                                            initial={{ width: 0 }}
+                                            animate={{ width: '100%' }}
+                                            transition={{ duration: 0.2 }}
+                                        />
+                                    )}
+                                </div>
                                 <Input
                                     label="CONFIRM ACCESS KEY"
                                     type="password"

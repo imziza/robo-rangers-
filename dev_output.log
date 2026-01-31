@@ -1,0 +1,14 @@
+
+> aletheon@0.1.0 dev
+> next dev
+
+▲ Next.js 16.1.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.0.2:3000
+- Environments: .env.local
+
+✓ Starting...
+✓ Ready in 1885ms
+○ Compiling /login ...
+ GET /login 200 in 5.6s (compile: 4.7s, proxy.ts: 270ms, render: 646ms)
+ GET /register 200 in 2.3s (compile: 2.1s, proxy.ts: 11ms, render: 274ms)

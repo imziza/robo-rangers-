@@ -10,7 +10,7 @@
 .sidebar {
     width: 260px;
     background-color: var(--bg-darker);
-    border-right: 1px solid var(--bg-elevated);
+    border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
     transition: transform var(--transition-base);
@@ -89,6 +89,7 @@
 .navItem.active {
     background-color: var(--gold-muted);
     color: var(--gold-primary);
+    box-shadow: inset 2px 0 0 var(--gold-primary);
 }
 
 .navIcon {
@@ -171,10 +172,11 @@
     gap: var(--space-6);
     padding: var(--space-4) var(--space-6);
     background-color: var(--bg-darker);
-    border-bottom: 1px solid var(--bg-elevated);
+    border-bottom: 1px solid var(--border-color);
     position: sticky;
     top: 0;
     z-index: var(--z-elevated);
+    backdrop-filter: blur(10px);
 }
 
 .menuToggle {
@@ -300,6 +302,26 @@
     justify-content: center;
     background-color: var(--bg-elevated);
     border-radius: var(--radius-full);
+}
+
+/* Ambient Specializations */
+:global([data-theme='ambient']) .sidebar {
+    background-color: rgba(10, 15, 26, 0.8);
+    backdrop-filter: blur(20px);
+}
+
+:global([data-theme='ambient']) .topBar {
+    background-color: rgba(10, 15, 26, 0.6);
+    backdrop-filter: blur(15px);
+}
+
+:global([data-theme='ambient']) .navItem.active {
+    background-color: rgba(201, 162, 39, 0.15);
+    box-shadow: 0 0 15px rgba(201, 162, 39, 0.2), inset 2px 0 0 var(--gold-primary);
+}
+
+:global([data-theme='ambient']) .logoIcon {
+    filter: drop-shadow(0 0 8px var(--gold-primary));
 }
 
 .userAvatar svg {

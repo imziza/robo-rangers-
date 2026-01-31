@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { Atmosphere } from "@/components/ui/Atmosphere";
 import "./globals.css";
 
 export const metadata: Metadata = {
@@ -25,6 +26,7 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <ThemeProvider>
+          <Atmosphere />
           {children}
         </ThemeProvider>
       </body>

@@ -1,6 +1,7 @@
 'use client';
 
-import { forwardRef, InputHTMLAttributes, TextareaHTMLAttributes, useId } from 'react';
+import { forwardRef, InputHTMLAttributes, TextareaHTMLAttributes, useId, ReactNode } from 'react';
+import { motion } from 'framer-motion';
 import styles from './Input.module.css';
 
 export interface InputProps extends InputHTMLAttributes<HTMLInputElement> {
@@ -37,7 +38,10 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                         {label}
                     </label>
                 )}
-                <div className={`${styles.inputWrapper} ${error ? styles.hasError : ''}`}>
+                <motion.div
+                    className={`${styles.inputWrapper} ${error ? styles.hasError : ''}`}
+                    whileFocus={{ scale: 1.01 }}
+                >
                     {leftIcon && <span className={styles.leftIcon}>{leftIcon}</span>}
                     <input
                         ref={ref}
@@ -46,7 +50,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
                         {...props}
                     />
                     {rightIcon && <span className={styles.rightIcon}>{rightIcon}</span>}
-                </div>
+                </motion.div>
                 {error && <span className={styles.error}>{error}</span>}
                 {hint && !error && <span className={styles.hint}>{hint}</span>}
             </div>
@@ -57,7 +61,7 @@ export const Input = forwardRef<HTMLInputElement, InputProps>(
 Input.displayName = 'Input';
 
 // Textarea variant
-export interface TextareaProps extends React.TextareaHTMLAttributes<HTMLTextAreaElement> {
+export interface TextareaProps extends TextareaHTMLAttributes<HTMLTextAreaElement> {
     label?: string;
     error?: string;
     hint?: string;

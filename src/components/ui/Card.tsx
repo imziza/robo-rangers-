@@ -1,6 +1,8 @@
 'use client';
 
 import { ReactNode } from 'react';
+import { motion } from 'framer-motion';
+import { Image as ImageIcon } from 'lucide-react';
 import styles from './Card.module.css';
 
 export interface CardProps {
@@ -32,9 +34,16 @@ export function Card({
         .join(' ');
 
     return (
-        <div className={cardClasses} onClick={onClick} role={onClick ? 'button' : undefined}>
+        <motion.div
+            className={cardClasses}
+            onClick={onClick}
+            role={onClick ? 'button' : undefined}
+            whileHover={hoverable || onClick ? { y: -4, transition: { duration: 0.2 } } : {}}
+            initial={variant === 'artifact' ? { opacity: 0, scale: 0.95 } : {}}
+            animate={{ opacity: 1, scale: 1 }}
+        >
             {children}
-        </div>
+        </motion.div>
     );
 }
 
@@ -70,11 +79,7 @@ export function ArtifactCard({
                     <img src={imageUrl} alt={title} className={styles.artifactImage} />
                 ) : (
                     <div className={styles.artifactPlaceholder}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5">
-                            <rect x="3" y="3" width="18" height="18" rx="2" />
-                            <circle cx="8.5" cy="8.5" r="1.5" />
-                            <path d="m21 15-5-5L5 21" />
-                        </svg>
+                        <ImageIcon size={40} strokeWidth={1} />
                     </div>
                 )}
 

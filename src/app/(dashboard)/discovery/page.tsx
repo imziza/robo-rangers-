@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
+import { Search, Compass, Shield, ArrowRight, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import styles from './page.module.css';
 
@@ -74,14 +75,6 @@ export default function DiscoveryPage() {
         <div className={styles.container}>
             {/* Header - Aletheon Laboratory Terminal */}
             <header className={styles.header}>
-                <nav className={styles.breadcrumb}>
-                    <span>Global Archive Search</span>
-                    <span>•</span>
-                    <span>Specimen AI Matcher</span>
-                    <span>•</span>
-                    <span className={styles.active}>Deep Discovery Hub</span>
-                </nav>
-
                 <h1 className={styles.title}>Deep Discovery</h1>
                 <p className={styles.subtitle}>
                     AI-driven visual analysis and cross-referencing of global archaeological repositories.
@@ -133,9 +126,7 @@ export default function DiscoveryPage() {
                                         />
                                     ) : (
                                         <div className={styles.imagePlaceholder}>
-                                            <svg width="60" height="60" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="0.5">
-                                                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-                                            </svg>
+                                            <Shield size={60} strokeWidth={0.5} />
                                         </div>
                                     )}
                                     <span className={styles.matchBadge}>
@@ -233,11 +224,7 @@ export default function DiscoveryPage() {
                             variant="primary"
                             fullWidth
                             onClick={() => setShowModal(true)}
-                            rightIcon={
-                                <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                                    <path d="M5 12h14M12 5l7 7-7 7" />
-                                </svg>
-                            }
+                            rightIcon={<ArrowRight size={14} />}
                         >
                             Investigate Global Archive Record
                         </Button>
@@ -257,8 +244,10 @@ export default function DiscoveryPage() {
                     }}>
                         <button
                             onClick={() => setShowModal(false)}
-                            style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer' }}
-                        >CLOSE TERMINAL [X]</button>
+                            style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', fontWeight: 600 }}
+                        >
+                            CLOSE TERMINAL <X size={14} />
+                        </button>
 
                         <div style={{ marginBottom: '30px' }}>
                             <span style={{ fontFamily: 'monospace', color: 'var(--gold-primary)', fontSize: '10px', letterSpacing: '2px' }}>GLOBAL ARCHIVE INTERFACE // DEEP SCAN</span>

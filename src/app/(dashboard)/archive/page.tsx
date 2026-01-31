@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import { Search, Filter, Download, Archive as ArchiveIcon } from 'lucide-react';
 import { ArtifactCard } from '@/components/ui/Card';
 import { Button } from '@/components/ui/Button';
 import styles from './page.module.css';
@@ -86,14 +87,11 @@ export default function ArchivePage() {
 
                 <div className={styles.actions}>
                     <div className={styles.searchBox}>
-                        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2">
-                            <circle cx="11" cy="11" r="8" />
-                            <line x1="21" y1="21" x2="16.65" y2="16.65" />
-                        </svg>
+                        <Search size={18} strokeWidth={2} />
                         <input type="text" placeholder="Search archive..." className={styles.searchInput} />
                     </div>
-                    <Button variant="outline">Filter Repository</Button>
-                    <Button variant="primary">Export Archive</Button>
+                    <Button variant="outline" leftIcon={<Filter size={16} />}>Filter Repository</Button>
+                    <Button variant="primary" leftIcon={<Download size={16} />}>Export Archive</Button>
                 </div>
             </header>
 
