@@ -27,6 +27,7 @@ interface ArtifactMarker {
     coordinates: [number, number];
     type: 'personal' | 'museum' | 'site';
     verified: boolean;
+    imageUrl?: string;
 }
 
 const MOCK_MARKERS: ArtifactMarker[] = [
@@ -147,19 +148,14 @@ export default function AtlasPage() {
 
     const loadArtifacts = async () => {
         const supabase = createSupabaseBrowserClient();
-        const { data, error } = await supabase
-            .from('artifacts')
-            .select('*');
+        try {
+            const { data, error } = await supabase
+                .from('artifacts')
+                .select('*, artifact_images(image_url, is_primary)');
 
-        if (error) {
-            console.error('Error loading map artifacts:', error);
-            // Fallback to mock for demo if DB is empty
-            setArtifacts(MOCK_MARKERS);
-            return;
-        }
+            if (error) throw error;
 
-        if (data) {
-            const formatted: ArtifactMarker[] = data.map(a => ({
+            const formatted: ArtifactMarker[] = (data || []).map(a => ({
                 id: a.id,
                 title: a.title,
                 era: a.era || 'Unknown',
@@ -167,9 +163,17 @@ export default function AtlasPage() {
                 coordinates: [a.longitude || 0, a.latitude || 0],
                 type: 'personal',
                 verified: a.status === 'stable',
+                imageUrl: a.artifact_images?.find((img: any) => img.is_primary)?.image_url
             }));
-            setArtifacts([...MOCK_MARKERS, ...formatted]);
-            setLiveSites(data.length + MOCK_MARKERS.filter(m => m.type === 'site').length);
+
+            // Filter out artifacts with invalid coordinates (0,0) unless they are actually at 0,0
+            const validFormatted = formatted.filter(a => a.coordinates[0] !== 0 || a.coordinates[1] !== 0);
+
+            setArtifacts([...MOCK_MARKERS, ...validFormatted]);
+            setLiveSites(validFormatted.length + MOCK_MARKERS.filter(m => m.type === 'site').length);
+        } catch (error) {
+            console.error('Error loading map artifacts:', error);
+            setArtifacts(MOCK_MARKERS);
         }
     };
 
@@ -205,7 +209,11 @@ export default function AtlasPage() {
                 const popupContent = `
                     <div class="${styles.hoverPopup}">
                         <div class="${styles.hoverHeader}">${marker.type.toUpperCase()} DISCOVERY</div>
-                        ${marker.type !== 'museum' ? `<div class="${styles.hoverImage}"><img src="${marker.id === 'AL-441-K' ? '/artifacts/mask.png' : (marker.id === 'AL-992-X' ? '/artifacts/sarcophagus.png' : '')}" /></div>` : ''}
+                        ${marker.imageUrl || (marker.id === 'AL-441-K' ? '/artifacts/mask.png' : (marker.id === 'AL-992-X' ? '/artifacts/sarcophagus.png' : '')) ? `
+                            <div class="${styles.hoverImage}">
+                                <img src="${marker.imageUrl || (marker.id === 'AL-441-K' ? '/artifacts/mask.png' : '/artifacts/sarcophagus.png')}" />
+                            </div>
+                        ` : ''}
                         <div class="${styles.hoverTitle}">${marker.title}</div>
                         <div class="${styles.hoverMeta}">${marker.era} | ${marker.coordinates[0].toFixed(2)}°E, ${marker.coordinates[1].toFixed(2)}°N</div>
                     </div>

@@ -27,6 +27,7 @@ export default function DiscoveryPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('Egyptian funerary masks');
     const [showModal, setShowModal] = useState(false);
+    const [activeTab, setActiveTab] = useState('spectral');
     const resultsContainerRef = useRef<HTMLDivElement>(null);
 
     useEffect(() => {
@@ -41,7 +42,7 @@ export default function DiscoveryPage() {
             if (!response.ok) throw new Error('Search failed');
             const data = await response.json();
 
-            const transformedResults: SimilarArtifact[] = data.results.map((r: any) => ({
+            const transformedResults: SimilarArtifact[] = (data.results || []).map((r: any) => ({
                 id: r.id,
                 title: r.title,
                 imageUrl: r.imageUrl || r.thumbnailUrl,
@@ -212,12 +213,45 @@ export default function DiscoveryPage() {
 
                         {/* Analysis Tabs */}
                         <div className={styles.panelTabs}>
-                            <button className={`${styles.tab} ${styles.active}`}>
-                                ▶ Spectral Data
-                            </button>
-                            <button className={styles.tab}>Material Deconstruction</button>
-                            <button className={styles.tab}>History Profile</button>
-                            <button className={styles.tab}>AI Core Notes</button>
+                            {[
+                                { id: 'spectral', label: 'Spectral Data' },
+                                { id: 'material', label: 'Material' },
+                                { id: 'history', label: 'History' },
+                                { id: 'ai', label: 'AI Notes' }
+                            ].map((tab) => (
+                                <button
+                                    key={tab.id}
+                                    className={`${styles.tab} ${activeTab === tab.id ? styles.active : ''}`}
+                                    onClick={() => setActiveTab(tab.id)}
+                                >
+                                    {activeTab === tab.id && '▶ '} {tab.label}
+                                </button>
+                            ))}
+                        </div>
+
+                        <div className={styles.tabContent}>
+                            {activeTab === 'spectral' && (
+                                <div className={styles.spectralData}>
+                                    <div className={styles.spectralRow}><span>UV REFLECTANCE</span><span>0.84</span></div>
+                                    <div className={styles.spectralRow}><span>IR ABSORPTION</span><span>0.12</span></div>
+                                    <div className={styles.spectralRow}><span>X-RAY DENSITY</span><span>HIGH</span></div>
+                                </div>
+                            )}
+                            {activeTab === 'material' && (
+                                <p className={styles.tabText}>
+                                    Composition: {selectedArtifact.material}. Primary isotopes suggest origin from {selectedArtifact.region}.
+                                </p>
+                            )}
+                            {activeTab === 'history' && (
+                                <p className={styles.tabText}>
+                                    Chronological markers align with the {selectedArtifact.era}. Cultural influences from {selectedArtifact.culture}.
+                                </p>
+                            )}
+                            {activeTab === 'ai' && (
+                                <p className={styles.tabText}>
+                                    AI Hypothesis: This artifact likely served a high-status function within {selectedArtifact.culture} society, possibly during ceremonial rituals.
+                                </p>
+                            )}
                         </div>
 
                         <Button

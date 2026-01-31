@@ -23,8 +23,10 @@
 
 .artifact {
     background-color: var(--bg-card);
-    border: 1px solid var(--bg-elevated);
+    border: 1px solid var(--border-color);
     overflow: hidden;
+    backdrop-filter: blur(12px);
+    box-shadow: var(--glass-shadow);
 }
 
 /* Padding variants */
@@ -56,7 +58,8 @@
 
 .artifact.hoverable:hover {
     transform: translateY(-4px);
-    box-shadow: var(--shadow-lg);
+    border-color: var(--gold-primary);
+    box-shadow: 0 12px 40px rgba(0, 0, 0, 0.5), 0 0 20px rgba(201, 162, 39, 0.1);
 }
 
 /* Artifact Card Specific */

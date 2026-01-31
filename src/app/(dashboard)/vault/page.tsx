@@ -8,7 +8,16 @@ import { Button } from '@/components/ui/Button';
 import styles from './page.module.css';
 
 interface Artifact {
-    id: string; title: string; classification: string | null; material: string | null; era: string | null; status: 'stable' | 'critical' | 'pending'; confidence_score: number | null; created_at: string; images?: { image_url: string; is_primary: boolean }[];
+    id: string;
+    title: string;
+    classification: string | null;
+    material: string | null;
+    era: string | null;
+    status: 'stable' | 'critical' | 'pending';
+    confidence_score: number | null;
+    created_at: string;
+    images?: { image_url: string; is_primary: boolean }[];
+    ai_report?: any;
 }
 
 const MATERIALS = ['All', 'Gold', 'Stone', 'Lapis', 'Clay', 'Bronze', 'Terracotta'];
@@ -23,20 +32,61 @@ export default function VaultPage() {
     const [selectedArtifact, setSelectedArtifact] = useState<Artifact | null>(null);
     const [isLoading, setIsLoading] = useState(true);
 
-    useEffect(() => { loadArtifacts(); }, []);
+    useEffect(() => {
+        loadArtifacts();
+
+        // Subscribe to real-time changes
+        const channel = supabase
+            .channel('artifacts-changes')
+            .on(
+                'postgres_changes',
+                { event: '*', table: 'artifacts', schema: 'public' },
+                () => {
+                    loadArtifacts();
+                }
+            )
+            .subscribe();
+
+        return () => {
+            supabase.removeChannel(channel);
+        };
+    }, []);
 
     const loadArtifacts = async () => {
         setIsLoading(true);
         try {
-            const { data, error } = await supabase.from('artifacts').select('*, artifact_images (image_url, is_primary)').order('created_at', { ascending: false });
+            const { data, error } = await supabase
+                .from('artifacts')
+                .select('*, artifact_images (image_url, is_primary)')
+                .order('created_at', { ascending: false });
+
             if (error) throw error;
-            const dbArtifacts = (data || []).map(d => ({ ...d, images: d.artifact_images || [] }));
-            const localCatalog = JSON.parse(localStorage.getItem('vault_catalog') || '[]');
-            const localArtifacts = localCatalog.filter((la: Artifact) => !dbArtifacts.find(da => da.id === la.id)).map((la: Artifact & { image_url?: string }) => ({ ...la, images: la.image_url ? [{ image_url: la.image_url, is_primary: true }] : [] }));
+
+            const dbArtifacts = (data || []).map(d => ({
+                ...d,
+                images: d.artifact_images || []
+            }));
+
+            // Sync local storage if needed, but prioritize DB
+            const localCatalog: Artifact[] = JSON.parse(localStorage.getItem('vault_catalog') || '[]');
+            const localArtifacts = localCatalog
+                .filter((la: Artifact) => !dbArtifacts.find(da => da.id === la.id))
+                .map((la: Artifact & { image_url?: string }) => ({
+                    ...la,
+                    images: la.image_url ? [{ image_url: la.image_url, is_primary: true }] : []
+                }));
+
             const combined = [...localArtifacts, ...dbArtifacts];
             setArtifacts(combined);
-            if (combined.length > 0) setSelectedArtifact(combined[0]);
-        } catch (err) { console.error(err); } finally { setIsLoading(false); }
+
+            if (combined.length > 0 && !selectedArtifact) {
+                setSelectedArtifact(combined[0]);
+            }
+        } catch (err) {
+            console.error('Error loading vault:', err);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     const filteredArtifacts = artifacts.filter(artifact => {
@@ -49,27 +99,49 @@ export default function VaultPage() {
     return (
         <div className={styles.container}>
             <aside className={styles.filterSidebar}>
-                <div className={styles.sidebarHeader}><h2 className={styles.sidebarTitle}>Preservation Vault</h2><span className={styles.sidebarSubtitle}>ARTIFACT DATABASE v4.2</span></div>
+                <div className={styles.sidebarHeader}>
+                    <h2 className={styles.sidebarTitle}>Preservation Vault</h2>
+                    <span className={styles.sidebarSubtitle}>ARTIFACT DATABASE v4.2</span>
+                </div>
                 <nav className={styles.statusNav}>
                     {STATUSES.map(status => (
-                        <button key={status} className={`${styles.statusItem} ${selectedStatus === status ? styles.active : ''}`} onClick={() => setSelectedStatus(status)}>{status}</button>
+                        <button
+                            key={status}
+                            className={`${styles.statusItem} ${selectedStatus === status ? styles.active : ''}`}
+                            onClick={() => setSelectedStatus(status)}
+                        >
+                            {status}
+                        </button>
                     ))}
                 </nav>
                 <div className={styles.filterSection}>
                     <h3 className={styles.filterTitle}>Filter by Material</h3>
                     <div className={styles.materialTags}>
                         {MATERIALS.map(material => (
-                            <button key={material} className={`${styles.materialTag} ${selectedMaterial === material ? styles.active : ''}`} onClick={() => setSelectedMaterial(material)}>{material}</button>
+                            <button
+                                key={material}
+                                className={`${styles.materialTag} ${selectedMaterial === material ? styles.active : ''}`}
+                                onClick={() => setSelectedMaterial(material)}
+                            >
+                                {material}
+                            </button>
                         ))}
                     </div>
                 </div>
-                <Button variant="primary" fullWidth onClick={() => router.push('/analysis')}>New Analysis</Button>
+                <Button variant="primary" fullWidth onClick={() => router.push('/analysis')}>
+                    New Analysis
+                </Button>
             </aside>
+
             <main className={styles.mainContent}>
                 <div className={styles.contentHeader}>
                     <div className={styles.activeAnalysis}>
+                        <span className={styles.activeLabel}>Current Specimen</span>
                         {selectedArtifact ? (
-                            <h1 className={styles.activeTitle}>{selectedArtifact.id}: {selectedArtifact.title}</h1>
+                            <>
+                                <h1 className={styles.activeTitle}>{selectedArtifact.title}</h1>
+                                <p className={styles.activeMeta}>{selectedArtifact.classification || 'Unclassified'} • {selectedArtifact.era || 'Era Unknown'}</p>
+                            </>
                         ) : (
                             <h1 className={styles.activeTitle}>No Specimen Selected</h1>
                         )}
@@ -79,20 +151,106 @@ export default function VaultPage() {
                         disabled={!selectedArtifact}
                         onClick={() => selectedArtifact && router.push(`/report/${selectedArtifact.id}`)}
                     >
-                        View Report
+                        View Full Report
                     </Button>
                 </div>
+
                 <div className={styles.artifactGrid}>
                     <AnimatePresence mode="popLayout">
-                        {isLoading ? Array(8).fill(0).map((_, i) => <motion.div key={i} className={styles.skeletonCard} initial={{ opacity: 0 }} animate={{ opacity: 1 }} exit={{ opacity: 0 }} />)
-                        : filteredArtifacts.map(artifact => (
-                            <motion.div key={artifact.id} layout initial={{ opacity: 0, scale: 0.9 }} animate={{ opacity: 1, scale: 1 }} className={`${styles.artifactItem} ${selectedArtifact?.id === artifact.id ? styles.selected : ''}`} onClick={() => setSelectedArtifact(artifact)}>
-                                <ArtifactCard id={artifact.id} title={artifact.title} imageUrl={artifact.images?.find(img => img.is_primary)?.image_url} classification={artifact.classification || undefined} era={artifact.era || undefined} status={artifact.status} digitized={Math.round((artifact.confidence_score || 0) * 100)} />
-                            </motion.div>
-                        ))}
+                        {isLoading && artifacts.length === 0 ? (
+                            Array(8).fill(0).map((_, i) => (
+                                <motion.div
+                                    key={`skeleton-${i}`}
+                                    className={styles.skeletonCard}
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    exit={{ opacity: 0 }}
+                                />
+                            ))
+                        ) : (
+                            filteredArtifacts.map(artifact => (
+                                <motion.div
+                                    key={artifact.id}
+                                    layout
+                                    initial={{ opacity: 0, scale: 0.9 }}
+                                    animate={{ opacity: 1, scale: 1 }}
+                                    className={`${styles.artifactItem} ${selectedArtifact?.id === artifact.id ? styles.selected : ''}`}
+                                    onClick={() => setSelectedArtifact(artifact)}
+                                >
+                                    <ArtifactCard
+                                        id={artifact.id}
+                                        title={artifact.title}
+                                        imageUrl={artifact.images?.find(img => img.is_primary)?.image_url}
+                                        classification={artifact.classification || undefined}
+                                        era={artifact.era || undefined}
+                                        status={artifact.status}
+                                        digitized={Math.round((artifact.confidence_score || 0) * 100)}
+                                    />
+                                </motion.div>
+                            ))
+                        )}
                     </AnimatePresence>
                 </div>
             </main>
+
+            {selectedArtifact && (
+                <aside className={styles.detailPanel}>
+                    <header className={styles.detailHeader}>
+                        <span className={styles.detailLabel}>SPECIMEN Dossier</span>
+                        <div className={styles.detailStars}>{'★'.repeat(Math.round((selectedArtifact.confidence_score || 0) * 5))}</div>
+                    </header>
+                    <h2 className={styles.detailTitle}>{selectedArtifact.title}</h2>
+                    <div className={styles.detailQuote}>
+                        &quot;{selectedArtifact.ai_report?.visualDescription?.slice(0, 150)}...&quot;
+                    </div>
+                    <div className={styles.specGrid}>
+                        <div className={styles.specItem}>
+                            <span className={styles.specLabel}>Material</span>
+                            <span className={styles.specValue}>{selectedArtifact.material || 'Mixed'}</span>
+                        </div>
+                        <div className={styles.specItem}>
+                            <span className={styles.specLabel}>Status</span>
+                            <span className={styles.specValue}>{selectedArtifact.status.toUpperCase()}</span>
+                        </div>
+                        <div className={styles.specItem}>
+                            <span className={styles.specLabel}>Chronology</span>
+                            <span className={styles.specValue}>{selectedArtifact.era || 'Unknown'}</span>
+                        </div>
+                        <div className={styles.specItem}>
+                            <span className={styles.specLabel}>Integrity</span>
+                            <span className={styles.specValue}>{Math.round((selectedArtifact.confidence_score || 0) * 100)}%</span>
+                        </div>
+                    </div>
+
+                    <div className={styles.chemSection}>
+                        <h3 className={styles.chemTitle}>
+                            <span className={styles.chemIcon}>⚡</span> COMPOSITION
+                        </h3>
+                        <div className={styles.chemBar}>
+                            <span className={styles.chemBarLabel}>Organic</span>
+                            <div className={styles.chemBarTrack}>
+                                <div className={styles.chemBarFill} style={{ width: '65%' }} />
+                            </div>
+                            <span className={styles.chemBarValue}>65%</span>
+                        </div>
+                        <div className={styles.chemBar}>
+                            <span className={styles.chemBarLabel}>Metallic</span>
+                            <div className={styles.chemBarTrack}>
+                                <div className={styles.chemBarFill} style={{ width: '22%' }} />
+                            </div>
+                            <span className={styles.chemBarValue}>22%</span>
+                        </div>
+                    </div>
+
+                    <Button
+                        variant="outline"
+                        fullWidth
+                        onClick={() => router.push(`/report/${selectedArtifact.id}`)}
+                    >
+                        Investigate Hypothesis
+                    </Button>
+                </aside>
+            )}
         </div>
     );
 }

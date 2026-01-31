@@ -67,13 +67,15 @@
 .secondary {
     background-color: var(--bg-elevated);
     color: var(--text-primary);
-    border: 1px solid var(--text-tertiary);
+    border: 1px solid var(--border-color);
+    backdrop-filter: blur(8px);
 }
 
 .secondary:hover:not(:disabled) {
     background-color: var(--bg-card-hover);
     border-color: var(--gold-primary);
     color: var(--gold-primary);
+    box-shadow: 0 0 15px rgba(201, 162, 39, 0.15);
 }
 
 .ghost {
@@ -90,10 +92,12 @@
     background-color: transparent;
     color: var(--gold-primary);
     border: 1px solid var(--gold-primary);
+    backdrop-filter: blur(4px);
 }
 
 .outline:hover:not(:disabled) {
     background-color: var(--gold-muted);
+    box-shadow: inset 0 0 10px rgba(201, 162, 39, 0.1);
 }
 
 .danger {

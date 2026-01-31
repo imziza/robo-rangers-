@@ -42,10 +42,30 @@
 }
 
 [data-theme='ambient'] {
-  --bg-main: #0A0F1A; --bg-darker: #05080F; --bg-card: rgba(15, 23, 42, 0.4); --bg-card-hover: rgba(30, 41, 59, 0.5); --bg-elevated: rgba(51, 65, 85, 0.4); --bg-input: rgba(15, 23, 42, 0.6); --bg-overlay: rgba(2, 6, 23, 0.8);
-  --text-primary: #F8FAFC; --text-secondary: #CBD5E1; --text-tertiary: #94A3B8; --text-muted: #475569;
-  --border-color: rgba(201, 162, 39, 0.2); --shadow-color: rgba(0, 0, 0, 0.4); --glass-bg: rgba(15, 23, 42, 0.6);
-  --accent-glow: 0 0 20px rgba(201, 162, 39, 0.3);
+  --bg-main: #060914;
+  --bg-darker: #02040a;
+  --bg-card: rgba(15, 23, 42, 0.3);
+  --bg-card-hover: rgba(30, 41, 59, 0.45);
+  --bg-elevated: rgba(51, 65, 85, 0.25);
+  --bg-input: rgba(15, 23, 42, 0.5);
+  --bg-overlay: rgba(2, 6, 23, 0.85);
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-tertiary: #94A3B8;
+  --text-muted: #475569;
+  --border-color: rgba(201, 162, 39, 0.15);
+  --shadow-color: rgba(0, 0, 0, 0.6);
+  --glass-bg: rgba(10, 15, 30, 0.7);
+  --accent-glow: 0 0 30px rgba(201, 162, 39, 0.2);
+  --glass-border: 1px solid rgba(255, 255, 255, 0.05);
+  --surface-gradient: linear-gradient(135deg, rgba(15, 23, 42, 0.8) 0%, rgba(2, 6, 23, 0.9) 100%);
+}
+
+.theme-ambient {
+  background-image:
+    radial-gradient(circle at 0% 0%, rgba(201, 162, 39, 0.03) 0%, transparent 50%),
+    radial-gradient(circle at 100% 100%, rgba(59, 130, 246, 0.03) 0%, transparent 50%);
+  background-attachment: fixed;
 }
 
 body {

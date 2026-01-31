@@ -216,6 +216,20 @@
     gap: var(--space-4);
 }
 
+.skeletonCard {
+    aspect-ratio: 0.8;
+    background: linear-gradient(90deg, var(--bg-card) 25%, var(--bg-elevated) 50%, var(--bg-card) 75%);
+    background-size: 200% 100%;
+    animation: loading 1.5s infinite;
+    border-radius: var(--radius-lg);
+    border: 1px solid var(--bg-elevated);
+}
+
+@keyframes loading {
+    0% { background-position: 200% 0; }
+    100% { background-position: -200% 0; }
+}
+
 .artifactItem {
     cursor: pointer;
     transition: transform var(--transition-fast);

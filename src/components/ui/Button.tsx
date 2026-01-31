@@ -1,7 +1,7 @@
 'use client';
 
-import { forwardRef, ButtonHTMLAttributes, ReactNode } from 'react';
-import { motion, HTMLMotionProps } from 'framer-motion';
+import { forwardRef, ButtonHTMLAttributes } from 'react';
+import { motion } from 'framer-motion';
 import { Loader2 } from 'lucide-react';
 import styles from './Button.module.css';
 
@@ -42,11 +42,11 @@ export const Button = forwardRef<HTMLButtonElement, ButtonProps>(
             .join(' ');
 
         // Filter out props that conflict with framer-motion
-        const { onAnimationStart, onDragStart, onDragEnd, onDrag, ...safeProps } = props as any;
+        const { ...safeProps } = props as any;
 
         return (
             <motion.button
-                ref={ref as any}
+                ref={ref as React.Ref<HTMLButtonElement>}
                 className={buttonClasses}
                 disabled={disabled || isLoading}
                 whileHover={{ scale: 1.02 }}

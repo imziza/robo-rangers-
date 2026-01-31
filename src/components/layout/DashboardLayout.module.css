@@ -13,7 +13,7 @@
     border-right: 1px solid var(--border-color);
     display: flex;
     flex-direction: column;
-    transition: transform var(--transition-base);
+    transition: transform 0.4s cubic-bezier(0.4, 0, 0.2, 1);
     position: fixed;
     top: 0;
     left: 0;
@@ -176,7 +176,7 @@
     position: sticky;
     top: 0;
     z-index: var(--z-elevated);
-    backdrop-filter: blur(10px);
+    backdrop-filter: blur(12px);
 }
 
 .menuToggle {
@@ -306,13 +306,15 @@
 
 /* Ambient Specializations */
 :global([data-theme='ambient']) .sidebar {
-    background-color: rgba(10, 15, 26, 0.8);
+    background-color: rgba(6, 9, 20, 0.85);
     backdrop-filter: blur(20px);
+    border-right: 1px solid var(--border-color);
 }
 
 :global([data-theme='ambient']) .topBar {
-    background-color: rgba(10, 15, 26, 0.6);
-    backdrop-filter: blur(15px);
+    background-color: rgba(6, 9, 20, 0.7);
+    backdrop-filter: blur(20px);
+    border-bottom: 1px solid var(--border-color);
 }
 
 :global([data-theme='ambient']) .navItem.active {

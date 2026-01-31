@@ -178,7 +178,7 @@
     align-items: center;
     justify-content: center;
     z-index: var(--z-modal);
-    backdrop-filter: blur(4px);
+    backdrop-filter: blur(8px);
 }
 
 .modal {
@@ -187,8 +187,9 @@
     max-width: 500px;
     padding: var(--space-10);
     border-radius: var(--radius-xl);
-    border: 1px solid var(--bg-elevated);
-    box-shadow: var(--shadow-xl);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--glass-shadow);
+    backdrop-filter: blur(20px);
 }
 
 .modalTitle {
