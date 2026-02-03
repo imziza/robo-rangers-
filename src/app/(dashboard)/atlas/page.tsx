@@ -1,558 +1,554 @@
 'use client';
 
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { createSupabaseBrowserClient } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
+import { HISTORICAL_EVENTS, getEventsForYear, HistoricalEvent, CIVILIZATIONS } from '@/lib/historical_data';
 import {
     Layers,
     Grid3X3,
     FileText,
     MapPin,
     Radio,
-    Landmark,
-    Circle,
+    Search,
     Navigation,
-    LocateFixed
+    LocateFixed,
+    History,
+    Anchor,
+    Sword,
+    ScrollText,
+    Flame,
+    BookOpen,
+    Quote,
+    Cpu,
+    Globe,
+    Share2,
+    Maximize2
 } from 'lucide-react';
+import { motion, AnimatePresence } from 'framer-motion';
 import styles from './page.module.css';
 
-interface ArtifactMarker {
+interface AtlasEntity {
     id: string;
-    title: string;
-    era: string;
-    depth: string;
+    title?: string;
+    name?: string;
+    era?: string;
+    year?: number;
+    startYear?: number;
+    endYear?: number;
     coordinates: [number, number];
-    type: 'personal' | 'museum' | 'site';
-    verified: boolean;
+    type: 'personal' | 'museum' | 'site' | 'event' | 'civilization';
+    verified?: boolean;
+    description?: string;
+    tag?: string;
+    color?: string;
+    region?: string;
+    analysis?: string;
 }
 
-const MOCK_MARKERS: ArtifactMarker[] = [
-    {
-        id: 'AL-441-K',
-        title: 'Bronze Aegis of the Anatolian Frontier',
-        era: 'Late Bronze',
-        depth: '1.42 Meters',
-        coordinates: [32.8647, 39.9334], // Ankara, Turkey
-        type: 'site',
-        verified: true,
-    },
-    {
-        id: 'museum-ankara',
-        title: 'Museum: Ankara',
-        era: '',
-        depth: '',
-        coordinates: [32.8597, 39.9208],
-        type: 'museum',
-        verified: true,
-    },
+const ERAS = [
+    { name: 'Bronze Age', start: -3300, end: -1200, color: '#CD7F32' },
+    { name: 'Iron Age', start: -1200, end: -500, color: '#A19D94' },
+    { name: 'Antiquity', start: -500, end: 476, color: '#C9A227' },
+    { name: 'Middle Ages', start: 476, end: 1453, color: '#8B0000' },
+    { name: 'Renaissance', start: 1453, end: 1600, color: '#4169E1' }
 ];
-
-const ERA_FILTERS = ['Bronze Age', 'Iron Age', 'Roman', 'Byzantine'];
 
 export default function AtlasPage() {
     const router = useRouter();
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<maplibregl.Map | null>(null);
 
-    const [artifacts, setArtifacts] = useState<ArtifactMarker[]>([]);
-    const [selectedEras, setSelectedEras] = useState<string[]>(['Bronze Age', 'Iron Age', 'Roman', 'Byzantine']);
+    const [artifacts, setArtifacts] = useState<AtlasEntity[]>([]);
+    const [viewYear, setViewYear] = useState(-1250); // Default to Trojan War era
+    const [searchQuery, setSearchQuery] = useState('');
+    const [showSources, setShowSources] = useState(false);
+    const [gpsGranted, setGpsGranted] = useState(false);
+    const [selectedEntity, setSelectedEntity] = useState<AtlasEntity | null>(null);
+
     const [layersVisible, setLayersVisible] = useState({
-        mapLayers: true,
         coordinateGrid: false,
         fieldNotes: false,
-        topography: true,
-        hydrology: false,
-        cityBoundaries: true,
+        historicalEvents: true,
+        discoveries: true,
+        ruins: false
     });
-    const [signalStrength, setSignalStrength] = useState('L-Band Satellite Linked');
-    const [accuracy, setAccuracy] = useState(98.4);
-    const [isPlanning, setIsPlanning] = useState(false);
-    const [gpsGranted, setGpsGranted] = useState(false);
-    const [selectedArtifact, setSelectedArtifact] = useState<ArtifactMarker | null>(null);
-    const [liveSites, setLiveSites] = useState(0);
-    const [viewYear, setViewYear] = useState(-1200); // 1200 BC
+
     const markersRef = useRef<{ [key: string]: maplibregl.Marker }>({});
-    const popupRef = useRef<maplibregl.Popup | null>(null);
-    const planningMarkerRef = useRef<maplibregl.Marker | null>(null);
 
     useEffect(() => {
-        loadArtifacts();
-    }, []);
+        const mapInstance = map.current;
+        if (!mapInstance) return;
 
-    useEffect(() => {
-        if (!map.current) return;
-
-        const updateGrid = () => {
-            if (!map.current) return;
-            const sourceId = 'coordinate-grid';
-
-            if (layersVisible.coordinateGrid) {
-                const bounds = map.current.getBounds();
-                const gridData: any = { type: 'FeatureCollection', features: [] };
-
-                // Add lat/long lines every degree
-                for (let lng = Math.floor(bounds.getWest()); lng <= Math.ceil(bounds.getEast()); lng++) {
-                    gridData.features.push({
-                        type: 'Feature',
-                        geometry: { type: 'LineString', coordinates: [[lng, bounds.getSouth()], [lng, bounds.getNorth()]] }
-                    });
-                }
-                for (let lat = Math.floor(bounds.getSouth()); lat <= Math.ceil(bounds.getNorth()); lat++) {
-                    gridData.features.push({
-                        type: 'Feature',
-                        geometry: { type: 'LineString', coordinates: [[bounds.getWest(), lat], [bounds.getEast(), lat]] }
-                    });
-                }
-
-                if (!map.current.getSource(sourceId)) {
-                    map.current.addSource(sourceId, { type: 'geojson', data: gridData });
-                    map.current.addLayer({
-                        id: sourceId,
-                        type: 'line',
-                        source: sourceId,
-                        paint: { 'line-color': '#C9A227', 'line-opacity': 0.2, 'line-width': 1 }
-                    });
-                } else {
-                    (map.current.getSource(sourceId) as any).setData(gridData);
-                }
-            } else if (map.current.getLayer(sourceId)) {
-                map.current.removeLayer(sourceId);
-                map.current.removeSource(sourceId);
+        ['giza-overlay', 'rome-overlay'].forEach(id => {
+            if (mapInstance.getLayer(id)) {
+                mapInstance.setLayoutProperty(id, 'visibility', layersVisible.ruins ? 'visible' : 'none');
             }
-        };
+        });
+    }, [layersVisible.ruins]);
 
-        updateGrid();
-        map.current.on('moveend', updateGrid);
-        return () => { map.current?.off('moveend', updateGrid); };
-    }, [layersVisible.coordinateGrid]);
+    // Derive era from viewYear
+    const currentEra = useMemo(() => {
+        return ERAS.find(e => viewYear >= e.start && viewYear <= e.end) || { name: 'Chronos Overflow', color: '#fff' };
+    }, [viewYear]);
+
+    // Derive active events for current year
+    const activeEvents = useMemo(() => getEventsForYear(viewYear, 100), [viewYear]);
+    const activeCivilizations = useMemo(() => {
+        return CIVILIZATIONS.filter(c => viewYear >= c.startYear && viewYear <= c.endYear);
+    }, [viewYear]);
+
+    const closestEvent = activeEvents[0];
 
     useEffect(() => {
-        const interval = setInterval(() => {
-            setAccuracy(prev => +(prev + (Math.random() - 0.5) * 0.1).toFixed(2));
-        }, 3000);
-        return () => clearInterval(interval);
+        loadData();
     }, []);
 
-    const getEraFromYear = (year: number) => {
-        if (year <= -2000) return 'Early Bronze';
-        if (year <= -1200) return 'Late Bronze';
-        if (year <= -700) return 'Iron Age';
-        if (year <= 476) return 'Roman';
-        if (year <= 1453) return 'Byzantine';
-        return 'Post-Classical';
-    };
-
-    const loadArtifacts = async () => {
+    const loadData = async () => {
         const supabase = createSupabaseBrowserClient();
-        const { data, error } = await supabase
-            .from('artifacts')
-            .select('*');
-
-        if (error) {
-            console.error('Error loading map artifacts:', error);
-            // Fallback to mock for demo if DB is empty
-            setArtifacts(MOCK_MARKERS);
-            return;
-        }
+        const { data } = await supabase.from('artifacts').select('*');
 
         if (data) {
-            const formatted: ArtifactMarker[] = data.map(a => ({
+            const formatted: AtlasEntity[] = data.map(a => ({
                 id: a.id,
                 title: a.title,
                 era: a.era || 'Unknown',
-                depth: 'Surface',
+                year: a.metadata?.year || -1000,
                 coordinates: [a.longitude || 0, a.latitude || 0],
                 type: 'personal',
                 verified: a.status === 'stable',
             }));
-            setArtifacts([...MOCK_MARKERS, ...formatted]);
-            setLiveSites(data.length + MOCK_MARKERS.filter(m => m.type === 'site').length);
+            setArtifacts(formatted);
         }
     };
 
+    // Update markers and polygons based on temporal filters
     useEffect(() => {
-        if (!map.current) return;
+        const mapInstance = map.current;
+        if (!mapInstance) return;
 
         // Clear existing markers
         Object.values(markersRef.current).forEach(m => m.remove());
         markersRef.current = {};
 
-        // Filter and add markers based on era and year
-        artifacts.filter(a => {
-            if (a.type === 'museum') return true;
-            const currentYearEra = getEraFromYear(viewYear).toLowerCase();
-            const artifactEra = a.era.toLowerCase();
-            const matchesEra = selectedEras.length === 0 || selectedEras.some(era => artifactEra.includes(era.toLowerCase()));
-            const matchesTimeline = artifactEra.includes(currentYearEra) || artifactEra.includes('unknown');
-            return matchesEra && matchesTimeline;
-        }).forEach((marker) => {
-            const el = document.createElement('div');
-            el.className = marker.type === 'museum' ? styles.museumMarker : styles.artifactMarker;
-            el.innerHTML = marker.type === 'museum'
-                ? '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><line x1="3" y1="22" x2="21" y2="22"/><line x1="6" y1="18" x2="6" y2="11"/><line x1="10" y1="18" x2="10" y2="11"/><line x1="14" y1="18" x2="14" y2="11"/><line x1="18" y1="18" x2="18" y2="11"/><polygon points="12 2 20 7 4 7 12 2"/></svg>'
-                : '<svg viewBox="0 0 24 24" fill="currentColor"><circle cx="12" cy="12" r="6"/></svg>';
+        // 1. Handle Civilization Polygons
+        const civSourceId = 'civilizations-source';
+        if (mapInstance.getSource(civSourceId)) {
+            const civData: any = {
+                type: 'FeatureCollection',
+                features: activeCivilizations.map(c => ({
+                    type: 'Feature',
+                    geometry: c.geometry,
+                    properties: { id: c.id, name: c.name, color: c.color }
+                }))
+            };
+            (mapInstance.getSource(civSourceId) as maplibregl.GeoJSONSource).setData(civData);
+        }
 
-            // Hover interactions
-            el.addEventListener('mouseenter', () => {
-                if (!map.current) return;
+        // 2. Handle map saturation/tint based on era
+        if (mapInstance.getLayer('background')) {
+            let saturation = -0.8;
+            let contrast = 0.2;
 
-                // Remove existing popup
-                if (popupRef.current) popupRef.current.remove();
+            if (viewYear <= -2000) { // Bronze Age / Ancient
+                saturation = -0.9;
+                contrast = 0.4;
+            } else if (viewYear >= 1500) { // Renaissance / Modernish
+                saturation = -0.3;
+                contrast = 0.1;
+            }
 
-                const popupContent = `
-                    <div class="${styles.hoverPopup}">
-                        <div class="${styles.hoverHeader}">${marker.type.toUpperCase()} DISCOVERY</div>
-                        ${marker.type !== 'museum' ? `<div class="${styles.hoverImage}"><img src="${marker.id === 'AL-441-K' ? '/artifacts/mask.png' : (marker.id === 'AL-992-X' ? '/artifacts/sarcophagus.png' : '')}" /></div>` : ''}
-                        <div class="${styles.hoverTitle}">${marker.title}</div>
-                        <div class="${styles.hoverMeta}">${marker.era} | ${marker.coordinates[0].toFixed(2)}°E, ${marker.coordinates[1].toFixed(2)}°N</div>
-                    </div>
+            mapInstance.setPaintProperty('background', 'raster-saturation', saturation);
+            mapInstance.setPaintProperty('background', 'raster-contrast', contrast);
+        }
+
+        // 3. Add Historical Events (Using New Beacon Design)
+        if (layersVisible.historicalEvents) {
+            activeEvents.forEach(event => {
+                const el = document.createElement('div');
+                el.className = styles.markerBeacon;
+                el.innerHTML = `
+                    <div class="${styles.beaconCore}"></div>
+                    <div class="${styles.beaconPulse}"></div>
                 `;
 
-                popupRef.current = new maplibregl.Popup({
-                    closeButton: false,
-                    closeOnClick: false,
-                    className: styles.mapPopup,
-                    offset: 15
-                })
-                    .setLngLat(marker.coordinates as maplibregl.LngLatLike)
-                    .setHTML(popupContent)
-                    .addTo(map.current);
+                el.addEventListener('click', () => {
+                    setSelectedEntity(event as any);
+                    mapInstance.flyTo({ center: event.coordinates, zoom: 8 });
+                });
+
+                markersRef.current[event.id] = new maplibregl.Marker({ element: el })
+                    .setLngLat(event.coordinates as maplibregl.LngLatLike)
+                    .addTo(mapInstance);
             });
+        }
 
-            el.addEventListener('mouseleave', () => {
-                if (popupRef.current) {
-                    popupRef.current.remove();
-                    popupRef.current = null;
-                }
+        // Add Discoveries filtered by time (rough era matching)
+        if (layersVisible.discoveries) {
+            artifacts.filter(a => {
+                const aYear = a.year || -1000;
+                return Math.abs(aYear - viewYear) < 500;
+            }).forEach(a => {
+                const el = document.createElement('div');
+                el.className = styles.markerBeacon;
+                el.innerHTML = `
+                    <div class="${styles.beaconCore}" style="background-color: #fff; box-shadow: 0 0 10px #fff;"></div>
+                `;
+
+                el.addEventListener('click', () => {
+                    setSelectedEntity(a);
+                    mapInstance.flyTo({ center: a.coordinates, zoom: 12 });
+                });
+
+                markersRef.current[a.id] = new maplibregl.Marker({ element: el })
+                    .setLngLat(a.coordinates as maplibregl.LngLatLike)
+                    .addTo(mapInstance);
             });
+        }
 
-            el.addEventListener('click', (e) => {
-                e.stopPropagation();
-                setSelectedArtifact(marker);
-                map.current?.flyTo({ center: marker.coordinates, zoom: 12 });
-            });
-
-            const m = new maplibregl.Marker({ element: el })
-                .setLngLat(marker.coordinates as maplibregl.LngLatLike)
-                .addTo(map.current!);
-
-            markersRef.current[marker.id] = m;
-        });
-    }, [artifacts, selectedEras, viewYear]);
+    }, [viewYear, artifacts, layersVisible, activeCivilizations, activeEvents]);
 
     useEffect(() => {
         if (!mapContainer.current || map.current) return;
 
-        // Initialize MapLibre
         map.current = new maplibregl.Map({
             container: mapContainer.current,
             style: {
                 version: 8,
                 sources: {
-                    osm: {
+                    esri: {
                         type: 'raster',
-                        tiles: [
-                            'https://a.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            'https://b.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                            'https://c.tile.openstreetmap.org/{z}/{x}/{y}.png',
-                        ],
+                        tiles: ['https://server.arcgisonline.com/ArcGIS/rest/services/World_Imagery/MapServer/tile/{z}/{y}/{x}'],
                         tileSize: 256,
-                        attribution: '&copy; OpenStreetMap Contributors',
+                        attribution: 'Tiles &copy; Esri',
                     },
                 },
-                layers: [
-                    {
-                        id: 'osm-tiles',
-                        type: 'raster',
-                        source: 'osm',
-                        minzoom: 0,
-                        maxzoom: 19,
-                        paint: {
-                            'raster-saturation': -0.7,
-                            'raster-brightness-min': 0.2,
-                            'raster-contrast': 0.1,
-                        },
-                    },
-                ],
+                layers: [{
+                    id: 'background',
+                    type: 'raster',
+                    source: 'esri',
+                    paint: { 'raster-saturation': -0.7, 'raster-contrast': 0.1 }
+                }],
             },
-            center: [32.8647, 39.9334],
-            zoom: 6,
+            center: [26.2393, 39.9575],
+            zoom: 5,
         });
 
-        map.current.on('click', (e) => {
-            setSelectedArtifact(null);
+        map.current.on('load', () => {
+            if (!map.current) return;
+            // Initialize overlays and layers (kept mostly same, just ensuring IDs match)
+            // Giza
+            map.current.addSource('giza-plan', {
+                type: 'image',
+                url: 'https://upload.wikimedia.org/wikipedia/commons/e/e5/Giza_pyramid_complex_%28map%29.svg',
+                coordinates: [[31.125, 29.985], [31.145, 29.985], [31.145, 29.970], [31.125, 29.970]]
+            });
+            map.current.addLayer({
+                id: 'giza-overlay',
+                source: 'giza-plan',
+                type: 'raster',
+                paint: { 'raster-opacity': 0.7, 'raster-fade-duration': 0 },
+                layout: { visibility: 'none' }
+            });
 
-            if (isPlanning) {
-                if (planningMarkerRef.current) planningMarkerRef.current.remove();
+            // Rome
+            map.current.addSource('rome-plan', {
+                type: 'image',
+                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Plan_of_Roman_Forum_mostly_English.jpg/1024px-Plan_of_Roman_Forum_mostly_English.jpg',
+                coordinates: [[12.480, 41.895], [12.490, 41.895], [12.490, 41.890], [12.480, 41.890]]
+            });
+            map.current.addLayer({
+                id: 'rome-overlay',
+                source: 'rome-plan',
+                type: 'raster',
+                paint: { 'raster-opacity': 0.6 },
+                layout: { visibility: 'none' }
+            });
 
-                const el = document.createElement('div');
-                el.className = styles.planningMarker;
-                el.innerHTML = '<svg viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 10c0 6-8 12-8 12s-8-6-8-12a8 8 0 0 1 16 0Z"/><circle cx="12" cy="10" r="3"/></svg>';
-
-                planningMarkerRef.current = new maplibregl.Marker({ element: el })
-                    .setLngLat(e.lngLat)
-                    .addTo(map.current!);
-
-                if (confirm(`Target confirmed at ${e.lngLat.lat.toFixed(4)}°N, ${e.lngLat.lng.toFixed(4)}°E. Initialize excavation protocols?`)) {
-                    router.push(`/analysis?lat=${e.lngLat.lat}&lng=${e.lngLat.lng}`);
+            // Civilizations
+            map.current.addSource('civilizations-source', {
+                type: 'geojson',
+                data: { type: 'FeatureCollection', features: [] }
+            });
+            map.current.addLayer({
+                id: 'civilizations-layer',
+                type: 'fill',
+                source: 'civilizations-source',
+                paint: {
+                    'fill-color': ['get', 'color'],
+                    'fill-opacity': 0.3,
+                    'fill-outline-color': ['get', 'color']
                 }
-            }
+            });
+
+            // Interactions
+            map.current.on('click', 'civilizations-layer', (e) => {
+                const feature = e.features?.[0];
+                if (feature) {
+                    const civ = CIVILIZATIONS.find(c => c.id === feature.properties.id);
+                    if (civ) setSelectedEntity(civ as any);
+                }
+            });
+
+            map.current.on('mouseenter', 'civilizations-layer', () => map.current!.getCanvas().style.cursor = 'pointer');
+            map.current.on('mouseleave', 'civilizations-layer', () => map.current!.getCanvas().style.cursor = '');
         });
 
-        map.current.addControl(new maplibregl.NavigationControl(), 'top-right');
-        map.current.addControl(new maplibregl.GeolocateControl({
-            positionOptions: { enableHighAccuracy: true },
-            trackUserLocation: true,
-        }), 'top-right');
-
-        // Markers are managed by a separate effect
-
-        return () => {
-            map.current?.remove();
-            map.current = null;
-        };
+        return () => map.current?.remove();
     }, []);
 
-    const toggleEra = (era: string) => {
-        setSelectedEras(prev =>
-            prev.includes(era)
-                ? prev.filter(e => e !== era)
-                : [...prev, era]
-        );
-    };
-
-    const toggleLayer = (layer: keyof typeof layersVisible) => {
-        setLayersVisible(prev => ({ ...prev, [layer]: !prev[layer] }));
-    };
-
-    const requestGpsPermission = async () => {
+    const handleSearch = async (e: React.FormEvent) => {
+        e.preventDefault();
         try {
-            const result = await navigator.permissions.query({ name: 'geolocation' });
-            if (result.state === 'granted' || result.state === 'prompt') {
-                navigator.geolocation.getCurrentPosition(
-                    (position) => {
-                        setGpsGranted(true);
-                        setAccuracy(+(position.coords.accuracy / 10).toFixed(1));
-                        map.current?.flyTo({
-                            center: [position.coords.longitude, position.coords.latitude],
-                            zoom: 12,
-                        });
-                    },
-                    (error) => console.error('GPS error:', error)
-                );
+            // 1. Try local search first (Civilizations/Events)
+            const localMatch = [...activeCivilizations, ...activeEvents].find((e: any) =>
+                (e.name || e.title || '').toLowerCase().includes(searchQuery.toLowerCase())
+            );
+
+            if (localMatch) {
+                setSelectedEntity(localMatch as any);
+                map.current?.flyTo({ center: (localMatch as any).coordinates, zoom: 6 });
+                return;
             }
-        } catch (err) {
-            console.error('Permission error:', err);
+
+            // 2. Fallback to Nominatim for Universal Search
+            const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`);
+            const data = await response.json();
+
+            if (data && data.length > 0) {
+                const result = data[0];
+                const lat = parseFloat(result.lat);
+                const lon = parseFloat(result.lon);
+                // ... (Create entity and fly)
+                const searchEntity: AtlasEntity = {
+                    id: `search-${Date.now()}`,
+                    title: result.display_name.split(',')[0],
+                    name: result.display_name.split(',')[0],
+                    description: `Automated geolocated result for "${searchQuery}". Archival analysis pending.`,
+                    type: 'site',
+                    coordinates: [lon, lat],
+                    year: viewYear,
+                    verified: false,
+                    tag: 'Geolocated'
+                };
+                setSelectedEntity(searchEntity);
+                map.current?.flyTo({ center: [lon, lat], zoom: 10 });
+            }
+        } catch (error) {
+            console.error("Search failed:", error);
         }
+    };
+
+    const jumpToEra = (era: any) => {
+        const midPoint = Math.floor((era.start + era.end) / 2);
+        setViewYear(midPoint);
     };
 
     return (
         <div className={styles.container}>
-            {/* Left Sidebar - Controls */}
-            <aside className={styles.sidebar}>
-                <div className={styles.sidebarSection}>
-                    <h3 className={styles.sectionTitle}>
-                        <span className={styles.sectionIcon}><Navigation size={14} /></span>
-                        ATLAS TOOLS
-                    </h3>
+            <div className={styles.vignette} />
+            <div className={styles.scanlines} />
 
-                    <div className={styles.toolList}>
-                        <label className={`${styles.toolItem} ${layersVisible.mapLayers ? styles.active : ''}`}>
-                            <input
-                                type="checkbox"
-                                checked={layersVisible.mapLayers}
-                                onChange={() => toggleLayer('mapLayers')}
-                            />
-                            <span className={styles.toolIcon}><Layers size={16} /></span>
-                            Map Layers
-                        </label>
-
-                        <label className={`${styles.toolItem} ${layersVisible.coordinateGrid ? styles.active : ''}`}>
-                            <input
-                                type="checkbox"
-                                checked={layersVisible.coordinateGrid}
-                                onChange={() => toggleLayer('coordinateGrid')}
-                            />
-                            <span className={styles.toolIcon}><Grid3X3 size={16} /></span>
-                            Coordinate Grid
-                        </label>
-
-                        <label className={`${styles.toolItem} ${layersVisible.fieldNotes ? styles.active : ''}`}>
-                            <input
-                                type="checkbox"
-                                checked={layersVisible.fieldNotes}
-                                onChange={() => toggleLayer('fieldNotes')}
-                            />
-                            <span className={styles.toolIcon}><FileText size={16} /></span>
-                            Field Notes
-                        </label>
+            {/* --- GPS Status Widget --- */}
+            <div className={styles.hudTopLeft}>
+                <div className={styles.statusWidget}>
+                    <div className={styles.statusIndicator}>
+                        <div className={styles.blinkingDot} />
+                        CONNECTION SECURE
                     </div>
                 </div>
+                <div className={styles.statusWidget} style={{ opacity: 0.7 }}>
+                    <div className={styles.statusIndicator}>
+                        <Globe size={12} style={{ marginRight: 4 }} />
+                        {viewYear < 0 ? `${Math.abs(viewYear)} BC` : `${viewYear} AD`}
+                    </div>
+                </div>
+            </div>
 
-                <div className={styles.sidebarSection}>
-                    <h3 className={styles.sectionTitle}>ERA FILTERS</h3>
-                    <div className={styles.eraFilters}>
-                        {ERA_FILTERS.map((era) => (
+            {/* --- Omnibox Search --- */}
+            <motion.div
+                className={styles.hudTopCenter}
+                initial={{ y: -50, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.6, ease: "easeOut" }}
+            >
+                <form onSubmit={handleSearch} className={styles.searchContainer}>
+                    <input
+                        type="text"
+                        placeholder="ENTER COORDINATES OR KEYWORD..."
+                        className={styles.searchInput}
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                    />
+                    <Search className={styles.searchIcon} size={16} />
+                </form>
+            </motion.div>
+
+            {/* --- Tool Stack --- */}
+            <motion.div
+                className={styles.hudTopRight}
+                initial={{ x: 50, opacity: 0 }}
+                animate={{ x: 0, opacity: 1 }}
+                transition={{ duration: 0.6, delay: 0.2 }}
+            >
+                <div className={styles.toolStack}>
+                    <button
+                        className={`${styles.toolButton} ${layersVisible.historicalEvents ? styles.active : ''}`}
+                        onClick={() => setLayersVisible({ ...layersVisible, historicalEvents: !layersVisible.historicalEvents })}
+                        title="Toggle Historical Events"
+                    >
+                        <Sword size={16} />
+                    </button>
+                    <button
+                        className={`${styles.toolButton} ${layersVisible.discoveries ? styles.active : ''}`}
+                        onClick={() => setLayersVisible({ ...layersVisible, discoveries: !layersVisible.discoveries })}
+                        title="Toggle Findings"
+                    >
+                        <MapPin size={16} />
+                    </button>
+                    <button
+                        className={`${styles.toolButton} ${layersVisible.ruins ? styles.active : ''}`}
+                        onClick={() => setLayersVisible({ ...layersVisible, ruins: !layersVisible.ruins })}
+                        title="Toggle Ancient Site Plans"
+                    >
+                        <Anchor size={16} />
+                    </button>
+                    <button
+                        className={`${styles.toolButton} ${layersVisible.coordinateGrid ? styles.active : ''}`}
+                        onClick={() => setLayersVisible({ ...layersVisible, coordinateGrid: !layersVisible.coordinateGrid })}
+                        title="Toggle Grid"
+                    >
+                        <Grid3X3 size={16} />
+                    </button>
+                </div>
+            </motion.div>
+
+            {/* --- Map Layer --- */}
+            <main className={styles.mapWrapper}>
+                <div ref={mapContainer} className={styles.map} />
+            </main>
+
+            {/* --- Codex Side Panel --- */}
+            <AnimatePresence>
+                {selectedEntity && (
+                    <motion.aside
+                        className={styles.codexPanel}
+                        initial={{ x: 400, opacity: 0 }}
+                        animate={{ x: 0, opacity: 1 }}
+                        exit={{ x: 400, opacity: 0 }}
+                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                    >
+                        <div className={styles.codexHeader}>
+                            <h2 className={styles.codexTitle}>{selectedEntity.name || selectedEntity.title}</h2>
+                            <span className={styles.codexSubtitle}>
+                                RECORD ID: {(selectedEntity.id).split('-')[0].toUpperCase()}
+                            </span>
+                        </div>
+
+                        <div className={styles.codexContent}>
+                            <div className={styles.dataBlock}>
+                                <span className={styles.dataLabel}>TEMPORAL LOCK</span>
+                                <span className={styles.dataValue}>
+                                    {(selectedEntity as any).startYear ?
+                                        `${Math.abs((selectedEntity as any).startYear)} - ${Math.abs((selectedEntity as any).endYear)}` :
+                                        `${Math.abs(selectedEntity.year || 0)}`
+                                    }
+                                    <span style={{ color: 'var(--gold-primary)', marginLeft: 8 }}>
+                                        {(selectedEntity.year || -1000) < 0 ? 'BCE' : 'CE'}
+                                    </span>
+                                </span>
+                            </div>
+
+                            <div className={styles.dataBlock}>
+                                <span className={styles.dataLabel}>ARCHIVAL DESCRIPTION</span>
+                                <p className={styles.dataValue}>
+                                    {selectedEntity.description || 'No descriptive data available for this archival entry.'}
+                                </p>
+                            </div>
+
+                            <div className={styles.aiTerminal}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: 'var(--gold-primary)' }}>
+                                    <Cpu size={14} />
+                                    <span style={{ fontWeight: 800, fontSize: 10, letterSpacing: '0.1em' }}>AI ANALYSIS RUNNING...</span>
+                                </div>
+                                {selectedEntity.analysis ||
+                                    "Processing vector data... Pattern recognition suggests high probability of significant cultural exchange events in this sector. Recommend further excavation."}
+                            </div>
+                        </div>
+
+                        <div className={styles.codexActions}>
+                            <Button variant="primary" fullWidth leftIcon={<BookOpen size={16} />} size="sm">
+                                OPEN FULL DOSSIER
+                            </Button>
+                            <Button variant="ghost" size="sm" leftIcon={<Share2 size={16} />}>
+                            </Button>
+                        </div>
+                    </motion.aside>
+                )}
+            </AnimatePresence>
+
+            {/* --- Chronometer --- */}
+            <motion.div
+                className={styles.chronometer}
+                initial={{ y: 100, opacity: 0 }}
+                animate={{ y: 0, opacity: 1 }}
+                transition={{ duration: 0.8, delay: 0.2 }}
+            >
+                <div className={styles.chronoContainer}>
+                    <div className={styles.chronoHeader}>
+                        <div className={styles.currentEraDisplay}>
+                            <span className={styles.eraLabel}>CURRENT TEMPORAL ZONE</span>
+                            <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{currentEra.name}</span>
+                        </div>
+                        <div className={styles.yearDisplay}>
+                            {Math.abs(viewYear)}
+                            <span className={styles.yearSuffix}>{viewYear < 0 ? 'BC' : 'AD'}</span>
+                        </div>
+                    </div>
+
+                    <div className={styles.timelineTrack}>
+                        <div className={styles.rail} />
+                        <div className={styles.tickMarks}>
+                            {[...Array(20)].map((_, i) => (
+                                <div
+                                    key={i}
+                                    className={`${styles.tick} ${i % 5 === 0 ? styles.major : ''}`}
+                                    style={{ left: `${(i / 19) * 100}%` }}
+                                />
+                            ))}
+                        </div>
+                        <motion.div
+                            className={styles.playhead}
+                            style={{ left: `${((viewYear - (-3300)) / (1600 - (-3300))) * 100}%` }}
+                        />
+
+                        {/* Interactive Slider Input */}
+                        <input
+                            type="range"
+                            min="-3300"
+                            max="1600"
+                            value={viewYear}
+                            onChange={(e) => setViewYear(Number(e.target.value))}
+                            className={styles.timelineInput}
+                        />
+                    </div>
+
+                    <div className={styles.eraControls}>
+                        {ERAS.map(era => (
                             <button
-                                key={era}
-                                className={`${styles.eraTag} ${selectedEras.includes(era) ? styles.active : ''}`}
-                                onClick={() => toggleEra(era)}
+                                key={era.name}
+                                className={`${styles.eraBtn} ${currentEra.name === era.name ? styles.active : ''}`}
+                                onClick={() => jumpToEra(era)}
                             >
-                                {era}
+                                {era.name}
                             </button>
                         ))}
                     </div>
                 </div>
-
-                <div className={styles.sidebarSection}>
-                    <h3 className={styles.sectionTitle}>VISUALIZATION</h3>
-                    <div className={styles.vizOptions}>
-                        <label className={styles.vizItem}>
-                            <input
-                                type="checkbox"
-                                checked={layersVisible.topography}
-                                onChange={() => toggleLayer('topography')}
-                            />
-                            Topography
-                        </label>
-                        <label className={styles.vizItem}>
-                            <input
-                                type="checkbox"
-                                checked={layersVisible.hydrology}
-                                onChange={() => toggleLayer('hydrology')}
-                            />
-                            Hydrology
-                        </label>
-                        <label className={styles.vizItem}>
-                            <input
-                                type="checkbox"
-                                checked={layersVisible.cityBoundaries}
-                                onChange={() => toggleLayer('cityBoundaries')}
-                            />
-                            City Boundaries
-                        </label>
-                    </div>
-                </div>
-
-                <div className={styles.gpsStatus}>
-                    <div className={`${styles.gpsIndicator} ${gpsGranted ? styles.granted : ''}`}>
-                        <LocateFixed size={16} strokeWidth={2} />
-                        GPS: {gpsGranted ? 'PERMISSION GRANTED' : 'AWAITING PERMISSION'}
-                    </div>
-                </div>
-
-                <Button
-                    variant={isPlanning ? "secondary" : "primary"}
-                    fullWidth
-                    onClick={() => {
-                        setIsPlanning(!isPlanning);
-                        if (!isPlanning) {
-                            alert('Click anywhere on the map to define a new excavation site coordinates.');
-                        }
-                    }}
-                >
-                    {isPlanning ? "Cancel Extraction" : "Start New Excavation"}
-                </Button>
-            </aside>
-
-            {/* Map Container */}
-            <main className={styles.mapWrapper}>
-                <div ref={mapContainer} className={styles.map} />
-
-                {/* Artifact Popup */}
-                {selectedArtifact && (
-                    <div className={styles.artifactPopup}>
-                        <div className={styles.popupHeader}>
-                            <span className={styles.popupBadge}>
-                                {selectedArtifact.verified ? '✓ VERIFIED' : 'UNVERIFIED'}
-                            </span>
-                        </div>
-
-                        <div className={styles.popupImage}>
-                            <div className={styles.siteLabel}>SITE: TROY</div>
-                        </div>
-
-                        <h3 className={styles.popupTitle}>{selectedArtifact.title}</h3>
-                        <p className={styles.popupCoords}>
-                            Lat: 39.9334° N | Long: 32.8647° E
-                        </p>
-
-                        <div className={styles.popupMeta}>
-                            <div className={styles.popupMetaItem}>
-                                <span className={styles.popupMetaLabel}>ERA</span>
-                                <span className={styles.popupMetaValue}>{selectedArtifact.era}</span>
-                            </div>
-                            <div className={styles.popupMetaItem}>
-                                <span className={styles.popupMetaLabel}>DEPTH</span>
-                                <span className={styles.popupMetaValue}>{selectedArtifact.depth}</span>
-                            </div>
-                        </div>
-
-                        <Button
-                            variant="secondary"
-                            fullWidth
-                            size="sm"
-                            onClick={() => router.push(`/report/${selectedArtifact.id}`)}
-                        >
-                            View Full Report
-                        </Button>
-
-                        <div className={styles.popupTag}>PERSONAL FIND</div>
-                    </div>
-                )}
-
-                {/* Museum Marker */}
-                <div className={styles.museumLabel}>
-                    <span className={styles.museumIcon}>🏛</span>
-                    MUSEUM: ANKARA
-                </div>
-            </main>
-
-            {/* Bottom Stats Bar */}
-            <footer className={styles.statsBar}>
-                <div className={styles.statGroup}>
-                    <span className={styles.statIcon}><Radio size={18} /></span>
-                    <div className={styles.statContent}>
-                        <span className={styles.statLabel}>SIGNAL STRENGTH</span>
-                        <span className={styles.statValue}>{signalStrength}</span>
-                    </div>
-                </div>
-
-                <div className={styles.statGroup}>
-                    <span className={styles.statValue}>{liveSites}</span>
-                    <span className={styles.statLabel}>LIVE SITES</span>
-                </div>
-
-                <div className={styles.statGroup}>
-                    <span className={styles.statValue}>{accuracy}%</span>
-                    <span className={styles.statLabel}>ACCURACY</span>
-                </div>
-
-                <div className={styles.timeline}>
-                    <span className={styles.timelineMarker} style={{ left: `${((viewYear + 2000) / 4000) * 100}%` }}>
-                        {Math.abs(viewYear)} {viewYear < 0 ? 'BCE' : 'CE'} ({getEraFromYear(viewYear).toUpperCase()})
-                    </span>
-                    <div className={styles.timelineTrack}>
-                        <input
-                            type="range"
-                            min="-2000"
-                            max="2000"
-                            value={viewYear}
-                            onChange={(e) => setViewYear(Number(e.target.value))}
-                            className={styles.timelineSlider}
-                        />
-                        <div className={styles.timelineFill} style={{ width: `${((viewYear + 2000) / 4000) * 100}%` }}></div>
-                    </div>
-                    <div className={styles.timelineLabels}>
-                        <span>2000 BCE</span>
-                        <span>0</span>
-                        <span>2000 CE</span>
-                    </div>
-                </div>
-            </footer>
+            </motion.div>
         </div>
     );
 }

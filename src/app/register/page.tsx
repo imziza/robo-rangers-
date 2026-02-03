@@ -5,11 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createSupabaseBrowserClient } from '@/lib/supabase';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { AuthLayout } from '@/components/layout/AuthLayout';
-import { SecurityShield } from '@/components/ui/SecurityShield';
-import { LivingLightBackground } from '@/components/ui/LivingLightBackground';
+import { ShieldCheck, Lock, User, ChevronRight, Fingerprint, Globe, Key } from 'lucide-react';
 import styles from './page.module.css';
 
 enum RegisterStep {
@@ -35,28 +31,26 @@ export default function RegisterPage() {
         password: '',
         confirmPassword: '',
     });
-    const [isTyping, setIsTyping] = useState(false);
+
+    // Mock Permissions State
+    const [permissions, setPermissions] = useState({
+        geoAtlas: true,
+        apiSync: false,
+        encryption: true
+    });
 
     const updateField = (field: string, value: string) => {
         setFormData(prev => ({ ...prev, [field]: value }));
-        setIsTyping(true);
-        setTimeout(() => setIsTyping(false), 1000);
     };
 
-    const getPasswordStrength = (pass: string) => {
-        if (!pass) return -1;
-        let strength = 0;
-        if (pass.length > 6) strength++;
-        if (pass.length > 10) strength++;
-        if (/[A-Z]/.test(pass)) strength++;
-        if (/[0-9!@#$%^&*]/.test(pass)) strength++;
-        return strength as 0 | 1 | 2 | 3 | 4;
+    const togglePermission = (key: keyof typeof permissions) => {
+        setPermissions(prev => ({ ...prev, [key]: !prev[key] }));
     };
 
     const handleNext = () => {
         if (step === RegisterStep.PROFILE) {
             if (!formData.fullName || !formData.institution) {
-                setError('Please provide your full identity and institutional affiliation.');
+                setError('IDENTITY INCOMPLETE: ALL FIELDS REQUIRED.');
                 return;
             }
             setError(null);
@@ -72,7 +66,7 @@ export default function RegisterPage() {
         setError(null);
 
         if (formData.password !== formData.confirmPassword) {
-            setError('Access Keys do not match. Integrity check failed.');
+            setError('SECURITY ALERT: KEY MISMATCH DETECTED.');
             setIsLoading(false);
             return;
         }
@@ -91,216 +85,214 @@ export default function RegisterPage() {
             });
 
             if (authError) {
-                setError(`AUTHORIZATION FAILED: ${authError.message.toUpperCase()}`);
+                setError(`CLEARANCE DENIED: ${authError.message.toUpperCase()}`);
                 return;
             }
 
             if (data.user) {
-                // Success - redirect to vault
+                // Success animation delay
+                await new Promise(resolve => setTimeout(resolve, 800));
                 router.push('/vault');
                 router.refresh();
             }
         } catch (err) {
             console.error('Registration error:', err);
-            setError('SYSTEM CRITICAL: Protocol execution failed.');
+            setError('SYSTEM CRITICAL: ENCRYPTION PROTOCOL FAILED.');
         } finally {
             setIsLoading(false);
         }
     };
 
+    const variants = {
+        enter: (direction: number) => ({
+            x: direction > 0 ? 50 : -50,
+            opacity: 0
+        }),
+        center: {
+            x: 0,
+            opacity: 1
+        },
+        exit: (direction: number) => ({
+            x: direction < 0 ? 50 : -50,
+            opacity: 0
+        })
+    };
+
     return (
-        <AuthLayout>
-            <LivingLightBackground />
+        <div className={styles.container}>
+            <div className={styles.overlay} />
+            <div className={styles.grid} />
 
             <motion.div
                 initial={{ opacity: 0, scale: 0.95 }}
                 animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                transition={{ duration: 0.5 }}
                 className={styles.card}
             >
-                {/* Stepper Header */}
-                <div className={styles.stepper}>
-                    <div className={`${styles.step} ${step >= RegisterStep.PROFILE ? styles.active : ''}`}>
-                        <span className={styles.stepNum}>01</span>
-                        <span className={styles.stepLabel}>PROFILE</span>
+                {/* Header Section */}
+                <div className={styles.stepperHeader}>
+                    <div className={styles.stepper}>
+                        <div className={`${styles.step} ${step >= RegisterStep.PROFILE ? styles.active : ''}`}>
+                            <div className={styles.stepIcon}>01</div>
+                            <span className={styles.stepLabel}>ID</span>
+                        </div>
+                        <div className={styles.stepLine} />
+                        <div className={`${styles.step} ${step >= RegisterStep.PERMISSIONS ? styles.active : ''}`}>
+                            <div className={styles.stepIcon}>02</div>
+                            <span className={styles.stepLabel}>LEVEL</span>
+                        </div>
+                        <div className={styles.stepLine} />
+                        <div className={`${styles.step} ${step >= RegisterStep.SECURITY ? styles.active : ''}`}>
+                            <div className={styles.stepIcon}>03</div>
+                            <span className={styles.stepLabel}>KEY</span>
+                        </div>
                     </div>
-                    <div className={styles.stepLine} />
-                    <div className={`${styles.step} ${step >= RegisterStep.PERMISSIONS ? styles.active : ''}`}>
-                        <span className={styles.stepNum}>02</span>
-                        <span className={styles.stepLabel}>ACCESS</span>
-                    </div>
-                    <div className={styles.stepLine} />
-                    <div className={`${styles.step} ${step >= RegisterStep.SECURITY ? styles.active : ''}`}>
-                        <span className={styles.stepNum}>03</span>
-                        <span className={styles.stepLabel}>SECURITY</span>
+
+                    <div className={styles.titleArea}>
+                        <h2 className={styles.title}>
+                            {step === RegisterStep.PROFILE && "Identity Verification"}
+                            {step === RegisterStep.PERMISSIONS && "Clearance Level"}
+                            {step === RegisterStep.SECURITY && "Key Generation"}
+                        </h2>
+                        <p className={styles.subtitle}>
+                            {step === RegisterStep.PROFILE && "ESTABLISHING ARCHIVAL PROFILE"}
+                            {step === RegisterStep.PERMISSIONS && "SETTING ACCESS PARAMETERS"}
+                            {step === RegisterStep.SECURITY && "FINALIZING ENCRYPTION"}
+                        </p>
                     </div>
                 </div>
 
-                <div className={styles.header}>
-                    <h1 className={styles.title}>
-                        {step === RegisterStep.PROFILE && "Researcher Identity"}
-                        {step === RegisterStep.PERMISSIONS && "Institutional Clearance"}
-                        {step === RegisterStep.SECURITY && "Account Encryption"}
-                    </h1>
-                    <p className={styles.subtitle}>
-                        {step === RegisterStep.PROFILE && "ESTABLISHING ARCHIVAL CREDENTIALS"}
-                        {step === RegisterStep.PERMISSIONS && "SELECTING CLEARANCE PARAMETERS"}
-                        {step === RegisterStep.SECURITY && "LOCKING SECURE ACCESS PROTOCOLS"}
-                    </p>
-                </div>
-
-                <form onSubmit={(e) => step === RegisterStep.SECURITY ? handleRegister(e) : e.preventDefault()}>
-                    <AnimatePresence mode="wait">
-                        {step === RegisterStep.PROFILE && (
-                            <motion.div
-                                key="step1"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className={styles.stepContent}
-                            >
-                                <Input
-                                    label="FULL LEGAL NAME"
-                                    value={formData.fullName}
-                                    onChange={(e) => updateField('fullName', e.target.value)}
-                                    placeholder="DR. JULIAN THORNE"
-                                    variant="dark"
-                                    required
-                                />
-                                <Input
-                                    label="PRIMARY INSTITUTION"
-                                    value={formData.institution}
-                                    onChange={(e) => updateField('institution', e.target.value)}
-                                    placeholder="INSTITUTE OF CLASSICAL ARCHAEOLOGY"
-                                    variant="dark"
-                                    required
-                                />
-                                <Input
-                                    label="CORE SPECIALIZATION"
-                                    value={formData.specialization}
-                                    onChange={(e) => updateField('specialization', e.target.value)}
-                                    placeholder="BRONZE AGE METALLURGY"
-                                    variant="dark"
-                                />
-                            </motion.div>
-                        )}
-
-                        {step === RegisterStep.PERMISSIONS && (
-                            <motion.div
-                                key="step2"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className={styles.stepContent}
-                            >
-                                <div className={styles.permissionItem}>
-                                    <div className={styles.permText}>
-                                        <strong>Geo-Atlas Access</strong>
-                                        <span>Allow GPS pinpointing for discovery verification.</span>
+                {/* Dynamic Content Area */}
+                <div className={styles.contentArea}>
+                    <form onSubmit={(e) => step === RegisterStep.SECURITY ? handleRegister(e) : e.preventDefault()} className={styles.formContent}>
+                        <AnimatePresence mode="wait" custom={step}>
+                            {step === RegisterStep.PROFILE && (
+                                <motion.div
+                                    key="profile"
+                                    custom={step}
+                                    variants={variants}
+                                    initial="enter"
+                                    animate="center"
+                                    exit="exit"
+                                    transition={{ duration: 0.3 }}
+                                    className={styles.formContent}
+                                >
+                                    <div className={styles.inputGroup}>
+                                        <label className={styles.inputLabel}>Full Legal Name</label>
+                                        <div className={styles.inputWrapper}>
+                                            <input className={styles.input} onChange={e => updateField('fullName', e.target.value)} value={formData.fullName} required />
+                                        </div>
                                     </div>
-                                    <div className={styles.toggle} />
-                                </div>
-                                <div className={styles.permissionItem}>
-                                    <div className={styles.permText}>
-                                        <strong>Smithsonian Search API</strong>
-                                        <span>Link global archives for semantic comparative matching.</span>
+                                    <div className={styles.inputGroup}>
+                                        <label className={styles.inputLabel}>Institution</label>
+                                        <div className={styles.inputWrapper}>
+                                            <input className={styles.input} onChange={e => updateField('institution', e.target.value)} value={formData.institution} required />
+                                        </div>
                                     </div>
-                                    <div className={styles.toggle} />
-                                </div>
-                                <div className={styles.permissionItem}>
-                                    <div className={styles.permText}>
-                                        <strong>E2EE Messaging</strong>
-                                        <span>Initialize end-to-end encryption for team collaboration.</span>
+                                    <div className={styles.inputGroup}>
+                                        <label className={styles.inputLabel}>Field of Specialization</label>
+                                        <div className={styles.inputWrapper}>
+                                            <input className={styles.input} onChange={e => updateField('specialization', e.target.value)} value={formData.specialization} />
+                                        </div>
                                     </div>
-                                    <div className={styles.toggle} />
-                                </div>
-                            </motion.div>
-                        )}
+                                </motion.div>
+                            )}
 
-                        {step === RegisterStep.SECURITY && (
-                            <motion.div
-                                key="step3"
-                                initial={{ opacity: 0, x: 20 }}
-                                animate={{ opacity: 1, x: 0 }}
-                                exit={{ opacity: 0, x: -20 }}
-                                className={styles.stepContent}
+                            {step === RegisterStep.PERMISSIONS && (
+                                <motion.div
+                                    key="permissions"
+                                    custom={step}
+                                    variants={variants}
+                                    initial="enter"
+                                    animate="center"
+                                    exit="exit"
+                                    transition={{ duration: 0.3 }}
+                                    className={styles.formContent}
+                                >
+                                    <div className={styles.permissionItem} onClick={() => togglePermission('geoAtlas')}>
+                                        <div className={styles.permText}>
+                                            <strong>Geo-Atlas Tracking</strong>
+                                            <span>Global positioning for fieldwork verification</span>
+                                        </div>
+                                        <div className={`${styles.toggle} ${permissions.geoAtlas ? styles.active : ''}`} />
+                                    </div>
+                                    <div className={styles.permissionItem} onClick={() => togglePermission('apiSync')}>
+                                        <div className={styles.permText}>
+                                            <strong>Global Archives Sync</strong>
+                                            <span>Connect to Smithsonian & British Museum APIs</span>
+                                        </div>
+                                        <div className={`${styles.toggle} ${permissions.apiSync ? styles.active : ''}`} />
+                                    </div>
+                                    <div className={styles.permissionItem} onClick={() => togglePermission('encryption')}>
+                                        <div className={styles.permText}>
+                                            <strong>E2E Encryption</strong>
+                                            <span>Military-grade message security protocols</span>
+                                        </div>
+                                        <div className={`${styles.toggle} ${permissions.encryption ? styles.active : ''}`} />
+                                    </div>
+                                </motion.div>
+                            )}
+
+                            {step === RegisterStep.SECURITY && (
+                                <motion.div
+                                    key="security"
+                                    custom={step}
+                                    variants={variants}
+                                    initial="enter"
+                                    animate="center"
+                                    exit="exit"
+                                    transition={{ duration: 0.3 }}
+                                    className={styles.formContent}
+                                >
+                                    <div className={styles.inputGroup}>
+                                        <label className={styles.inputLabel}>Secure Email</label>
+                                        <div className={styles.inputWrapper}>
+                                            <input type="email" className={styles.input} onChange={e => updateField('email', e.target.value)} value={formData.email} required />
+                                        </div>
+                                    </div>
+                                    <div className={styles.inputGroup}>
+                                        <label className={styles.inputLabel}>Private Key (Password)</label>
+                                        <div className={styles.inputWrapper}>
+                                            <input type="password" className={styles.input} onChange={e => updateField('password', e.target.value)} value={formData.password} required />
+                                        </div>
+                                    </div>
+                                    <div className={styles.inputGroup}>
+                                        <label className={styles.inputLabel}>Confirm Key</label>
+                                        <div className={styles.inputWrapper}>
+                                            <input type="password" className={styles.input} onChange={e => updateField('confirmPassword', e.target.value)} value={formData.confirmPassword} required />
+                                        </div>
+                                    </div>
+                                </motion.div>
+                            )}
+                        </AnimatePresence>
+
+                        {error && <div className={styles.error}>{error}</div>}
+
+                        <div className={styles.actions}>
+                            {step > RegisterStep.PROFILE && (
+                                <button type="button" className={styles.backBtn} onClick={() => setStep(prev => prev - 1)}>
+                                    BACK
+                                </button>
+                            )}
+                            <button
+                                type={step === RegisterStep.SECURITY ? "submit" : "button"}
+                                className={styles.nextBtn}
+                                onClick={step < RegisterStep.SECURITY ? handleNext : undefined}
+                                disabled={isLoading}
                             >
-                                <SecurityShield strength={getPasswordStrength(formData.password)} />
+                                {isLoading ? 'PROCESSING...' : step === RegisterStep.SECURITY ? 'GRANT CLEARANCE' : 'PROCEED'}
+                                {step < RegisterStep.SECURITY && <ChevronRight size={14} />}
+                                {step === RegisterStep.SECURITY && !isLoading && <Fingerprint size={14} />}
+                            </button>
+                        </div>
+                    </form>
 
-                                <Input
-                                    label="INSTITUTIONAL EMAIL"
-                                    type="email"
-                                    value={formData.email}
-                                    onChange={(e) => updateField('email', e.target.value)}
-                                    placeholder="j.thorne@ica.edu"
-                                    variant="dark"
-                                    required
-                                />
-                                <div className="relative">
-                                    <Input
-                                        label="NEW ACCESS KEY"
-                                        type="password"
-                                        value={formData.password}
-                                        onChange={(e) => updateField('password', e.target.value)}
-                                        placeholder="••••••••"
-                                        variant="dark"
-                                        required
-                                    />
-                                    {isTyping && (
-                                        <motion.div
-                                            className="absolute bottom-0 left-0 h-0.5 bg-gold-500/50"
-                                            initial={{ width: 0 }}
-                                            animate={{ width: '100%' }}
-                                            transition={{ duration: 0.2 }}
-                                        />
-                                    )}
-                                </div>
-                                <Input
-                                    label="CONFIRM ACCESS KEY"
-                                    type="password"
-                                    value={formData.confirmPassword}
-                                    onChange={(e) => updateField('confirmPassword', e.target.value)}
-                                    placeholder="••••••••"
-                                    variant="dark"
-                                    required
-                                />
-                            </motion.div>
-                        )}
-                    </AnimatePresence>
-
-                    {error && (
-                        <div className={styles.error}>{error}</div>
-                    )}
-
-                    <div className={styles.actions}>
-                        {step > RegisterStep.PROFILE && (
-                            <Button
-                                type="button"
-                                variant="outline"
-                                onClick={() => setStep(prev => prev - 1)}
-                                className={styles.backBtn}
-                            >
-                                PREVIOUS
-                            </Button>
-                        )}
-                        <Button
-                            type={step === RegisterStep.SECURITY ? "submit" : "button"}
-                            variant="primary"
-                            fullWidth={step === RegisterStep.PROFILE}
-                            onClick={step < RegisterStep.SECURITY ? handleNext : undefined}
-                            isLoading={isLoading}
-                            className={styles.nextBtn}
-                        >
-                            {step === RegisterStep.SECURITY ? "SUBMIT ARCHIVAL CLEARANCE" : "CONTINUE"}
-                        </Button>
+                    <div className={styles.footer}>
+                        <span>ALREADY CLEARED?</span>
+                        <Link href="/login" className={styles.loginLink}>ACCESS TERMINAL</Link>
                     </div>
-                </form>
-
-                <div className={styles.footer}>
-                    <span>Already authorized?</span>
-                    <Link href="/login" className={styles.loginLink}>LOGIN</Link>
                 </div>
             </motion.div>
-        </AuthLayout>
+        </div>
     );
 }

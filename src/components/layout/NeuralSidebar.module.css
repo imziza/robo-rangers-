@@ -1,0 +1,203 @@
+/* The Living Gradient Surface */
+.ribbonContainer {
+    position: fixed;
+    left: 0;
+    top: 0;
+    bottom: 0;
+    width: 80px;
+    /* Base width */
+    z-index: 100;
+    transition: width 0.4s cubic-bezier(0.2, 0.8, 0.2, 1);
+    will-change: width, clip-path;
+}
+
+.ribbonBody {
+    position: absolute;
+    inset: 0;
+    background: conic-gradient(from 180deg at 50% 50%,
+            #0a0f1a 0%,
+            #141925 25%,
+            #0f1420 50%,
+            #1a1f2e 75%,
+            #0a0f1a 100%);
+    /* The Living Gradient Aurora Effect */
+    overflow: hidden;
+}
+
+.ribbonBody::before {
+    content: '';
+    position: absolute;
+    inset: -50%;
+    background: radial-gradient(circle at 50% 50%, rgba(201, 162, 39, 0.03), transparent 60%);
+    animation: aurora 10s linear infinite;
+    mix-blend-mode: color-dodge;
+}
+
+.ribbonBody::after {
+    content: '';
+    position: absolute;
+    top: 0;
+    right: 0;
+    bottom: 0;
+    width: 2px;
+    background: linear-gradient(to bottom, transparent, rgba(201, 162, 39, 0.3), transparent);
+    box-shadow: 0 0 15px rgba(201, 162, 39, 0.2);
+    opacity: 0.6;
+}
+
+@keyframes aurora {
+    0% {
+        transform: rotate(0deg) scale(1.5);
+    }
+
+    100% {
+        transform: rotate(360deg) scale(1.5);
+    }
+}
+
+/* Amoeba Edge Effect - handled via SVG clip-path in component, but visual fallback here */
+.amoebaContainer {
+    position: relative;
+    height: 100%;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    padding-top: 2rem;
+    perspective: 1000px;
+    /* For Chrono-Stack 3D */
+}
+
+/* Chrono-Stack Items */
+.navItem {
+    position: relative;
+    width: 48px;
+    height: 48px;
+    margin: 12px 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border-radius: 16px;
+    background: rgba(255, 255, 255, 0.03);
+    border: 1px solid rgba(255, 255, 255, 0.05);
+    color: var(--text-secondary);
+    cursor: pointer;
+    transition: all 0.4s cubic-bezier(0.34, 1.56, 0.64, 1);
+    /* Elastic spring */
+    transform-style: preserve-3d;
+    backdrop-filter: blur(10px);
+}
+
+.navItem:hover {
+    background: rgba(201, 162, 39, 0.1);
+    border-color: rgba(201, 162, 39, 0.3);
+    color: var(--gold-primary);
+    box-shadow: 0 0 20px rgba(201, 162, 39, 0.2);
+}
+
+/* 3D Stack/Time Layering classes */
+.stackTop {
+    z-index: 10;
+    transform: translateZ(20px) scale(1.1);
+    box-shadow: 0 20px 40px rgba(0, 0, 0, 0.5);
+    border-color: var(--gold-primary);
+    color: var(--gold-primary);
+}
+
+.stackMid {
+    z-index: 5;
+    transform: translateZ(0px) scale(1);
+    opacity: 0.8;
+}
+
+.stackBottom {
+    z-index: 1;
+    transform: translateZ(-20px) scale(0.9) rotateX(10deg);
+    opacity: 0.5;
+    filter: grayscale(1);
+}
+
+/* Gravity Well Indicator */
+.gravityRing {
+    position: absolute;
+    inset: -4px;
+    border: 1px dashed rgba(201, 162, 39, 0.3);
+    border-radius: 20px;
+    opacity: 0;
+    transform: scale(0.8);
+    transition: all 0.3s;
+    pointer-events: none;
+}
+
+.navItem:hover .gravityRing {
+    opacity: 1;
+    transform: scale(1.2) rotate(90deg);
+}
+
+/* Breathing Dock Pulse */
+@keyframes breathe {
+
+    0%,
+    100% {
+        box-shadow: 0 0 5px rgba(201, 162, 39, 0.05);
+    }
+
+    50% {
+        box-shadow: 0 0 15px rgba(201, 162, 39, 0.15);
+    }
+}
+
+.breathing {
+    animation: breathe 4s ease-in-out infinite;
+}
+
+/* Label - Usually hidden until hover/expand */
+.label {
+    position: absolute;
+    left: 60px;
+    background: rgba(10, 10, 10, 0.9);
+    padding: 6px 12px;
+    border-radius: 6px;
+    font-size: 12px;
+    color: white;
+    opacity: 0;
+    transform: translateX(-10px);
+    transition: all 0.3s;
+    pointer-events: none;
+    white-space: nowrap;
+    border: 1px solid rgba(255, 255, 255, 0.1);
+}
+
+.navItem:hover .label {
+    opacity: 1;
+    transform: translateX(0);
+}
+
+/* Logo Area */
+.logo {
+    margin-bottom: 40px;
+    color: var(--gold-primary);
+    filter: drop-shadow(0 0 10px rgba(201, 162, 39, 0.5));
+    animation: float 6s ease-in-out infinite;
+}
+
+@keyframes float {
+
+    0%,
+    100% {
+        transform: translateY(0);
+    }
+
+    50% {
+        transform: translateY(-5px);
+    }
+}
+
+/* Bottom Actions */
+.footer {
+    margin-top: auto;
+    padding-bottom: 2rem;
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+    align-items: center;
+}

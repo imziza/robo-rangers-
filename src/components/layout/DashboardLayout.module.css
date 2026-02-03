@@ -145,6 +145,33 @@
     height: 18px;
 }
 
+.signOutBtn {
+    display: flex;
+    align-items: center;
+    gap: var(--space-3);
+    padding: var(--space-3) var(--space-4);
+    width: 100%;
+    color: var(--text-tertiary);
+    background: transparent;
+    border: none;
+    border-radius: var(--radius-md);
+    cursor: pointer;
+    transition: all var(--transition-fast);
+    font-size: var(--text-sm);
+    font-weight: 500;
+    margin-top: var(--space-2);
+}
+
+.signOutBtn:hover {
+    background: rgba(255, 69, 58, 0.1);
+    color: #ff453a;
+}
+
+.signOutBtn svg {
+    width: 20px;
+    height: 20px;
+}
+
 /* Main Content Area */
 .main {
     flex: 1;
@@ -156,7 +183,8 @@
 }
 
 .main.sidebarOpen {
-    margin-left: 260px;
+    margin-left: 80px;
+    /* Matches NeuralSidebar base width */
 }
 
 @media (max-width: 1024px) {
@@ -281,12 +309,32 @@
     cursor: pointer;
     border-radius: var(--radius-full);
     transition: all var(--transition-fast);
+    position: relative;
+    text-decoration: none;
 }
 
 .notificationBtn:hover,
 .userBtn:hover {
     background-color: var(--bg-card);
     color: var(--gold-primary);
+}
+
+.badge {
+    position: absolute;
+    top: 6px;
+    right: 6px;
+    background-color: var(--status-critical);
+    color: white;
+    font-size: 8px;
+    font-weight: 800;
+    min-width: 14px;
+    height: 14px;
+    border-radius: 7px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    border: 2px solid var(--bg-darker);
+    padding: 0 2px;
 }
 
 .notificationBtn svg {

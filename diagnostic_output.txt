@@ -1,0 +1,15 @@
+=== OPENROUTER DIAGNOSTIC ===
+Time: 2026-01-31T18:40:54.445Z
+Key found: true
+Key prefix: sk-or-v1-f8bc6f
+
+Attempting HTTPS request to OpenRouter...
+Status Code: 200
+Response Body:
+
+         
+
+         
+
+         
+{"id":"gen-1769884857-uqfItm8jIpJGM4vjENPq","provider":"Chutes","model":"tngtech/deepseek-r1t2-chimera:free","object":"chat.completion","created":1769884857,"choices":[{"logprobs":null,"finish_reason":"stop","native_finish_reason":"stop","index":0,"message":{"role":"assistant","content":"Hello! How can I assist you today? 😊","refusal":null,"reasoning":"\nHi there! How can I assist you today? 😊\n","reasoning_details":[{"format":"unknown","index":0,"type":"reasoning.text","text":"\nHi there! How can I assist you today? 😊\n"}]}}],"usage":{"prompt_tokens":4,"completion_tokens":29,"total_tokens":33,"cost":0,"is_byok":false,"prompt_tokens_details":{"cached_tokens":0,"audio_tokens":0},"cost_details":{"upstream_inference_cost":0,"upstream_inference_prompt_cost":0,"upstream_inference_completions_cost":0},"completion_tokens_details":{"reasoning_tokens":14,"audio_tokens":0}}}

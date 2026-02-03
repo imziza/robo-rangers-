@@ -5,11 +5,7 @@ import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import { motion, AnimatePresence } from 'framer-motion';
 import { createSupabaseBrowserClient } from '@/lib/supabase';
-import { AlertCircle, ShieldCheck } from 'lucide-react';
-import { Button } from '@/components/ui/Button';
-import { Input } from '@/components/ui/Input';
-import { AuthLayout } from '@/components/layout/AuthLayout';
-import { LivingLightBackground } from '@/components/ui/LivingLightBackground';
+import { AlertCircle, ShieldCheck, Sparkles, Lock } from 'lucide-react';
 import styles from './page.module.css';
 
 export default function LoginPage() {
@@ -20,7 +16,7 @@ export default function LoginPage() {
     const [password, setPassword] = useState('');
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
-    const [isTyping, setIsTyping] = useState(false);
+    const [focusedField, setFocusedField] = useState<string | null>(null);
 
     const handleLogin = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -35,141 +31,127 @@ export default function LoginPage() {
 
             if (authError) {
                 if (authError.message === 'Invalid login credentials') {
-                    setError('ACCESS DENIED: The credentials provided do not match our archival records.');
+                    setError('ACCESS DENIED: IDENTITY VERIFICATION FAILED.');
                 } else {
                     setError(`CREDENTIAL ERROR: ${authError.message.toUpperCase()}`);
                 }
                 return;
             }
 
-            // Successful login
+            // Successful login animation delay
+            await new Promise(resolve => setTimeout(resolve, 800));
             router.push('/vault');
             router.refresh();
         } catch (err) {
             console.error('Login error:', err);
-            setError('SYSTEM FAILURE: Unable to establish secure connection with Auth Node.');
+            setError('SYSTEM FAILURE: UNABLE TO CONTACT AUTH NODE.');
         } finally {
             setIsLoading(false);
         }
     };
 
     return (
-        <AuthLayout>
-            <LivingLightBackground />
-
-            {/* Typing Reaction Pulse */}
-            <AnimatePresence>
-                {isTyping && (
-                    <motion.div
-                        initial={{ opacity: 0 }}
-                        animate={{ opacity: 1 }}
-                        exit={{ opacity: 0 }}
-                        className="fixed inset-0 pointer-events-none z-[-1] bg-gold-500/5 transition-colors duration-1000"
-                    />
-                )}
-            </AnimatePresence>
+        <div className={styles.container}>
+            {/* Ambient Background */}
+            <div className={styles.overlay} />
+            <div className={styles.grid} />
 
             <motion.div
-                initial={{ opacity: 0, scale: 0.95 }}
-                animate={{ opacity: 1, scale: 1 }}
-                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1] }}
+                initial={{ opacity: 0, y: 20 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 1, ease: [0.22, 1, 0.36, 1] }}
                 className={styles.card}
             >
                 <div className={styles.header}>
-                    <h1 className={styles.title}>Secure Archive Access</h1>
-                    <p className={styles.subtitle}>LOGIN TO THE ALETHEON PRESERVATION NETWORK</p>
+                    <motion.div
+                        className={styles.logoIcon}
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: 0.2 }}
+                    >
+                        <Sparkles size={32} strokeWidth={1} />
+                    </motion.div>
+                    <h1 className={styles.title}>Preservation</h1>
+                    <p className={styles.subtitle}>SECURE ARCHIVE ACCESS TERMINAL</p>
                 </div>
 
                 <form className={styles.form} onSubmit={handleLogin}>
-                    <div className="relative">
-                        <Input
-                            label="INSTITUTIONAL EMAIL"
-                            type="email"
-                            placeholder="researcher@institution.edu"
-                            value={email}
-                            onChange={(e) => {
-                                setEmail(e.target.value);
-                                setIsTyping(true);
-                                setTimeout(() => setIsTyping(false), 1000);
-                            }}
-                            onFocus={() => setIsTyping(true)}
-                            onBlur={() => setIsTyping(false)}
-                            required
-                            variant="dark"
-                            className={styles.input}
-                        />
-                        {isTyping && (
-                            <motion.div
-                                layoutId="pulse"
-                                className="absolute -inset-1 border border-gold-500/20 rounded-lg pointer-events-none"
-                                animate={{ opacity: [0, 0.5, 0], scale: [1, 1.05, 1] }}
-                                transition={{ duration: 2, repeat: Infinity }}
+                    <div className={styles.inputGroup}>
+                        <label className={styles.inputLabel}>Researcher Identity</label>
+                        <div className={styles.inputWrapper}>
+                            <input
+                                type="email"
+                                value={email}
+                                onChange={(e) => setEmail(e.target.value)}
+                                onFocus={() => setFocusedField('email')}
+                                onBlur={() => setFocusedField(null)}
+                                className={styles.input}
+                                placeholder="INSTITUTIONAL ID"
+                                required
                             />
-                        )}
+                            <div className={styles.biometricScan} />
+                        </div>
                     </div>
 
-                    <div className={styles.passwordWrapper}>
-                        <div className="relative">
-                            <Input
-                                label="ACCESS KEY"
+                    <div className={styles.inputGroup}>
+                        <label className={styles.inputLabel}>Security Clearance</label>
+                        <div className={styles.inputWrapper}>
+                            <input
                                 type="password"
-                                placeholder="••••••••"
                                 value={password}
-                                onChange={(e) => {
-                                    setPassword(e.target.value);
-                                    setIsTyping(true);
-                                    setTimeout(() => setIsTyping(false), 1000);
-                                }}
-                                onFocus={() => setIsTyping(true)}
-                                onBlur={() => setIsTyping(false)}
-                                required
-                                variant="dark"
+                                onChange={(e) => setPassword(e.target.value)}
+                                onFocus={() => setFocusedField('password')}
+                                onBlur={() => setFocusedField(null)}
                                 className={styles.input}
+                                placeholder="ACCESS KEY"
+                                required
                             />
-                            {isTyping && (
-                                <motion.div
-                                    layoutId="pulse"
-                                    className="absolute -inset-1 border border-gold-500/20 rounded-lg pointer-events-none"
-                                    animate={{ opacity: [0, 0.5, 0], scale: [1, 1.05, 1] }}
-                                    transition={{ duration: 2, repeat: Infinity }}
-                                />
-                            )}
+                            <div className={styles.biometricScan} />
                         </div>
                         <Link href="/forgot-password" className={styles.forgotLink}>
-                            FORGOT ACCESS KEY?
+                            RESET KEY?
                         </Link>
                     </div>
 
-                    {error && (
-                        <motion.div
-                            initial={{ opacity: 0, scale: 0.95 }}
-                            animate={{ opacity: 1, scale: 1 }}
-                            className={styles.error}
-                        >
-                            <AlertCircle size={16} className={styles.errorIcon} />
-                            {error}
-                        </motion.div>
-                    )}
+                    <AnimatePresence>
+                        {error && (
+                            <motion.div
+                                initial={{ opacity: 0, height: 0 }}
+                                animate={{ opacity: 1, height: 'auto' }}
+                                exit={{ opacity: 0, height: 0 }}
+                                className={styles.error}
+                            >
+                                <AlertCircle size={16} />
+                                {error}
+                            </motion.div>
+                        )}
+                    </AnimatePresence>
 
-                    <Button
+                    <button
                         type="submit"
-                        variant="primary"
-                        fullWidth
-                        isLoading={isLoading}
                         className={styles.submitBtn}
-                        leftIcon={<ShieldCheck size={18} />}
+                        disabled={isLoading}
                     >
-                        AUTHORIZE ACCESS
-                    </Button>
+                        {isLoading ? (
+                            <motion.span
+                                animate={{ opacity: [1, 0.5, 1] }}
+                                transition={{ repeat: Infinity, duration: 1.5 }}
+                            >
+                                VERIFYING BIOMETRICS...
+                            </motion.span>
+                        ) : (
+                            'INITIATE SESSION'
+                        )}
+                    </button>
                 </form>
 
                 <div className={styles.footer}>
-                    <span>New to the archives?</span>
+                    <span>NEW RESEARCHER?</span>
                     <Link href="/register" className={styles.registerLink}>
-                        REQUEST CLEARANCE
+                        APPLY FOR CLEARANCE
                     </Link>
                 </div>
             </motion.div>
-        </AuthLayout>
+        </div>
     );
 }

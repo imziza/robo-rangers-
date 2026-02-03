@@ -1,10 +1,11 @@
 'use client';
 
-import { ReactNode, useState } from 'react';
+import { ReactNode, useState, useEffect } from 'react';
 import Link from 'next/link';
-import { usePathname } from 'next/navigation';
+import { usePathname, useRouter } from 'next/navigation';
 import { useTheme } from '@/components/ThemeProvider';
 import { Breadcrumbs } from '@/components/ui/Breadcrumbs';
+import { createSupabaseBrowserClient } from '@/lib/supabase';
 import {
     Database,
     Map as MapIcon,
@@ -20,8 +21,10 @@ import {
     User,
     Sun,
     Moon,
-    Sparkles
+    Sparkles,
+    LogOut as LucideLogOut
 } from 'lucide-react';
+import { NeuralSidebar } from './NeuralSidebar';
 import styles from './DashboardLayout.module.css';
 
 interface DashboardLayoutProps {
@@ -40,59 +43,56 @@ const NAV_ITEMS = [
 
 export function DashboardLayout({ children }: DashboardLayoutProps) {
     const pathname = usePathname();
+    const router = useRouter();
     const { theme, toggleTheme } = useTheme();
+    const supabase = createSupabaseBrowserClient();
+
     const [searchQuery, setSearchQuery] = useState('');
-    const [sidebarOpen, setSidebarOpen] = useState(true);
+    // sidebarOpen state removed as NeuralSidebar is persistent
+    const [unreadCount, setUnreadCount] = useState(0);
+
+    useEffect(() => {
+        loadUnreadCount();
+
+        const channel = supabase
+            .channel('layout_notifications')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, () => {
+                setUnreadCount(prev => prev + 1);
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, []);
+
+    const loadUnreadCount = async () => {
+        const { data: { user } } = await supabase.auth.getUser();
+        if (!user) return;
+
+        const { count } = await supabase
+            .from('notifications')
+            .select('*', { count: 'exact', head: true })
+            .eq('user_id', user.id)
+            .eq('is_read', false);
+
+        setUnreadCount(count || 0);
+    };
 
     return (
         <div className={styles.container}>
             {/* Sidebar */}
-            <aside className={`${styles.sidebar} ${sidebarOpen ? styles.open : ''}`}>
-                <div className={styles.sidebarHeader}>
-                    <Link href="/vault" className={styles.logo}>
-                        <div className={styles.logoIcon}>
-                            <Sparkles size={24} strokeWidth={1.5} />
-                        </div>
-                        <span className={styles.logoText}>ALETHEON</span>
-                    </Link>
-                </div>
-
-                <nav className={styles.nav}>
-                    {NAV_ITEMS.map((item) => {
-                        const Icon = item.icon;
-                        return (
-                            <Link
-                                key={item.href}
-                                href={item.href}
-                                className={`${styles.navItem} ${pathname === item.href ? styles.active : ''}`}
-                            >
-                                <span className={styles.navIcon}>
-                                    <Icon size={20} strokeWidth={1.5} />
-                                </span>
-                                <span className={styles.navLabel}>{item.label}</span>
-                            </Link>
-                        );
-                    })}
-                </nav>
-
-                <div className={styles.sidebarFooter}>
-                    <Link href="/analysis" className={styles.newAnalysisBtn}>
-                        <Plus size={20} strokeWidth={2} />
-                        New Analysis
-                    </Link>
-                </div>
-            </aside>
+            {/* Neural Ribbon Sidebar */}
+            <NeuralSidebar />
 
             {/* Main Content */}
-            <div className={`${styles.main} ${sidebarOpen ? styles.sidebarOpen : ''}`}>
+            {/* Adjusted main margin logic to account for NeuralSidebar's new behavior if needed, 
+                though NeuralSidebar is fixed position so main content might need a fixed left margin 
+                or we keep the existing .main styles if they align with the new width (80px) */}
+
+            {/* Main Content */}
+            <div className={`${styles.main} ${styles.sidebarOpen}`}>
                 {/* Top Bar */}
                 <header className={styles.topBar}>
-                    <button
-                        className={styles.menuToggle}
-                        onClick={() => setSidebarOpen(!sidebarOpen)}
-                    >
-                        <Menu size={20} strokeWidth={2} />
-                    </button>
+                    {/* Menu toggle removed for Neural Sidebar */}
 
                     <div className={styles.searchWrapper}>
                         <Search size={18} strokeWidth={2} />
@@ -116,14 +116,21 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                         <button onClick={toggleTheme} className={styles.notificationBtn} title="Toggle Theme">
                             {theme === 'dark' ? <Moon size={18} /> : theme === 'light' ? <Sun size={18} /> : <Sparkles size={18} />}
                         </button>
-                        <button className={styles.notificationBtn}>
+
+                        <Link href="/notifications" className={styles.notificationBtn}>
                             <Bell size={18} strokeWidth={2} />
-                        </button>
-                        <button className={styles.userBtn}>
+                            {unreadCount > 0 && <span className={styles.badge}>{unreadCount}</span>}
+                        </Link>
+
+                        <Link
+                            href="/profile"
+                            className={styles.userBtn}
+                            onMouseEnter={() => router.prefetch('/profile')}
+                        >
                             <div className={styles.userAvatar}>
                                 <User size={20} strokeWidth={1.5} />
                             </div>
-                        </button>
+                        </Link>
                     </div>
                 </header>
 

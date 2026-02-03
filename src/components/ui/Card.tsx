@@ -52,6 +52,7 @@ export interface ArtifactCardProps {
     id: string;
     title: string;
     imageUrl?: string;
+    image_urls?: string[]; // Supporting multiple images
     classification?: string;
     era?: string;
     material?: string;
@@ -61,9 +62,13 @@ export interface ArtifactCardProps {
     onClick?: () => void;
 }
 
+import { useState, useEffect } from 'react';
+import { AnimatePresence } from 'framer-motion';
+
 export function ArtifactCard({
     title,
     imageUrl,
+    image_urls = [],
     classification,
     era,
     material,
@@ -72,11 +77,33 @@ export function ArtifactCard({
     digitized,
     onClick
 }: ArtifactCardProps) {
+    const urls = image_urls.length > 0 ? image_urls : (imageUrl ? [imageUrl] : []);
+    const [currentIndex, setCurrentIndex] = useState(0);
+
+    useEffect(() => {
+        if (urls.length <= 1) return;
+        const interval = setInterval(() => {
+            setCurrentIndex(prev => (prev + 1) % urls.length);
+        }, 3000 + Math.random() * 2000); // Varied timing for more natural feel
+        return () => clearInterval(interval);
+    }, [urls.length]);
+
     return (
         <Card variant="artifact" padding="none" onClick={onClick} hoverable>
             <div className={styles.artifactImageWrapper}>
-                {imageUrl ? (
-                    <img src={imageUrl} alt={title} className={styles.artifactImage} />
+                {urls.length > 0 ? (
+                    <AnimatePresence mode="wait">
+                        <motion.img
+                            key={urls[currentIndex]}
+                            src={urls[currentIndex]}
+                            alt={title}
+                            className={styles.artifactImage}
+                            initial={{ opacity: 0 }}
+                            animate={{ opacity: 1 }}
+                            exit={{ opacity: 0 }}
+                            transition={{ duration: 0.5 }}
+                        />
+                    </AnimatePresence>
                 ) : (
                     <div className={styles.artifactPlaceholder}>
                         <ImageIcon size={40} strokeWidth={1} />

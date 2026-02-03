@@ -1,7 +1,9 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { useState, useEffect, useRef, Suspense } from 'react';
 import { useRouter } from 'next/navigation';
+import { useSearchParams } from 'next/navigation';
+import { motion, AnimatePresence, Variants } from 'framer-motion';
 import {
     Send,
     Search,
@@ -45,7 +47,13 @@ interface Profile {
 }
 
 export default function MessagesPage() {
+    return <MessagesContent />;
+}
+
+function MessagesContent() {
     const router = useRouter();
+    const searchParams = useSearchParams();
+    const chatIdFromURL = searchParams.get('chatId');
     const supabase = createSupabaseBrowserClient();
     const scrollRef = useRef<HTMLDivElement>(null);
 
@@ -57,6 +65,7 @@ export default function MessagesPage() {
     const [searchQuery, setSearchQuery] = useState('');
     const [searchResults, setSearchResults] = useState<Profile[]>([]);
     const [isSearching, setIsSearching] = useState(false);
+    const [isLoading, setIsLoading] = useState(false);
 
     // "Trusty" Features
     const [isConnected, setIsConnected] = useState(true); // Assume true initially
@@ -79,38 +88,130 @@ export default function MessagesPage() {
     }, []);
 
     const loadChats = async (userId: string) => {
-        const GLOBAL_HUB_ID = 'e02d6e46-1768-450f-9694-5c9c7f6e0266';
-        setChats([
-            { id: GLOBAL_HUB_ID, name: 'Global Research Hub', type: 'Group', lastMessage: 'System Secure.' },
-        ]);
-        setActiveChat({ id: GLOBAL_HUB_ID, name: 'Global Research Hub', type: 'Group' });
+        setIsLoading(true);
+        try {
+            // 1. Fetch Groups/Teams
+            const { data: groups } = await supabase
+                .from('group_members')
+                .select(`
+                    groups (
+                        id,
+                        name
+                    )
+                `)
+                .eq('user_id', userId);
+
+            const teamChats: Chat[] = (groups || []).map((g: any) => ({
+                id: g.groups.id,
+                name: g.groups.name,
+                type: 'Group',
+                lastMessage: 'Collaborative archive...'
+            }));
+
+            // 2. Fetch Direct Message partners (recent)
+            const { data: recentMsgs } = await supabase
+                .from('messages')
+                .select('sender_id, recipient_id')
+                .or(`sender_id.eq.${userId},recipient_id.eq.${userId}`)
+                .order('created_at', { ascending: false })
+                .limit(20);
+
+            const partnerIds = Array.from(new Set(
+                (recentMsgs || []).map(m => m.sender_id === userId ? m.recipient_id : m.sender_id)
+            )).filter(id => id !== null && id !== userId);
+
+            const partnerChats: Chat[] = [];
+            if (partnerIds.length > 0) {
+                const { data: profiles } = await supabase
+                    .from('profiles')
+                    .select('id, full_name')
+                    .in('id', partnerIds);
+
+                (profiles || []).forEach(p => {
+                    partnerChats.push({
+                        id: p.id,
+                        name: p.full_name || 'Unknown Scholar',
+                        type: 'Direct',
+                        online: true
+                    });
+                });
+            }
+
+            const allChats = [...teamChats, ...partnerChats];
+            setChats(allChats);
+
+            // Auto-select based on URL or first chat
+            let initialChat = null;
+            if (chatIdFromURL) {
+                const targetChat = allChats.find(c => c.id === chatIdFromURL);
+                if (targetChat) {
+                    initialChat = targetChat;
+                } else {
+                    // It's a new direct chat (from a notification)
+                    const { data: profile } = await supabase
+                        .from('profiles')
+                        .select('id, full_name')
+                        .eq('id', chatIdFromURL)
+                        .single();
+
+                    if (profile) {
+                        initialChat = {
+                            id: profile.id,
+                            name: profile.full_name || 'Academic Scholar',
+                            type: 'Direct' as const,
+                            online: true
+                        };
+                        setChats(prev => [initialChat!, ...prev]);
+                    }
+                }
+            }
+
+            if (initialChat) {
+                setActiveChat(initialChat);
+            } else if (allChats.length > 0 && !activeChat) {
+                setActiveChat(allChats[0]);
+            }
+        } catch (error) {
+            console.error('Error loading chats:', error);
+        } finally {
+            setIsLoading(false);
+        }
     };
 
     useEffect(() => {
         if (activeChat) {
-            loadMessages(activeChat.id);
+            loadMessages(activeChat);
+
+            // Clear messages when switching chats
+            setMessages([]);
+
             const channel = supabase
                 .channel(`chat-${activeChat.id}`)
-                .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'messages' }, (payload) => {
+                .on('postgres_changes', {
+                    event: 'INSERT',
+                    schema: 'public',
+                    table: 'messages',
+                    filter: activeChat.type === 'Group'
+                        ? `group_id=eq.${activeChat.id}`
+                        : `or(and(sender_id.eq.${currentUser?.id},recipient_id.eq.${activeChat.id}),and(sender_id.eq.${activeChat.id},recipient_id.eq.${currentUser?.id}))`
+                }, (payload) => {
                     const newMessage = payload.new as any;
-                    // Only add if we haven't already optimistically added it (check by temporary ID or similar content/timestamp heuristic if needed, 
-                    // but for simplicity we rely on ID. Optimistic ones have temp IDs.)
-                    if (newMessage.group_id === activeChat.id || newMessage.sender_id === activeChat.id || newMessage.recipient_id === activeChat.id) {
-                        setMessages(prev => {
-                            // Dedup: if we have a message with same content sent < 1sec ago by me, replace it? 
-                            // For now, simpler: Just append. Real logic needs ID matching.
-                            // We'll filter out the optimistic one if real one arrives (requires UUID matching which we can't do easily without returning it from insert)
-                            // So we won't add it if it's 'me' and we just sent it? 
-                            // Actually, Supabase realtime usually echoes back.
-                            if (newMessage.sender_id === currentUser?.id) {
-                                // Update the optimistic message to 'sent'
-                                return prev.map(m => (m.content === newMessage.content && m.status === 'sending')
-                                    ? { ...newMessage, isMe: true, status: 'sent' }
-                                    : m);
-                            }
-                            return [...prev, { ...newMessage, isMe: newMessage.sender_id === currentUser?.id, status: 'sent' }];
-                        });
-                    }
+
+                    setMessages(prev => {
+                        // Check if message is already there (optimistic or duplicate)
+                        if (prev.find(m => m.id === newMessage.id)) return prev;
+
+                        // If it's my message, we already have it in local state as 'sending' or 'sent'
+                        // but Supabase ID might be different. We'll handle deduplication by content/timestamp if needed,
+                        // but for standard teammate messages we just append.
+                        if (newMessage.sender_id === currentUser?.id) return prev;
+
+                        return [...prev, {
+                            ...newMessage,
+                            isMe: false,
+                            status: 'sent'
+                        }];
+                    });
                 })
                 .subscribe((status) => {
                     setIsConnected(status === 'SUBSCRIBED');
@@ -120,114 +221,36 @@ export default function MessagesPage() {
         }
     }, [activeChat, currentUser]);
 
-    useEffect(() => {
-        if (scrollRef.current) {
-            scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
-        }
-    }, [messages, isAiThinking]);
 
-    const loadMessages = async (chatId: string) => {
-        const { data, error } = await supabase
-            .from('messages')
-            .select('*')
-            .or(`group_id.eq.${chatId},sender_id.eq.${chatId},recipient_id.eq.${chatId}`)
-            .order('created_at', { ascending: true });
-
-        if (data) {
-            setMessages(data.map(m => ({
-                ...m,
-                isMe: m.sender_id === currentUser?.id,
-                status: 'sent'
-            })));
-        }
-    };
-
-    const handleSendMessage = async (e: React.FormEvent, retryContent?: string) => {
-        e.preventDefault();
-        const content = retryContent || messageText;
-
-        if (!content.trim() || !currentUser || !activeChat) return;
-
-        if (!retryContent) setMessageText('');
-
-        const tempId = 'temp-' + Date.now();
-        const optimisticMsg: Message = {
-            id: tempId,
-            sender_id: currentUser.id,
-            content,
-            created_at: new Date().toISOString(),
-            isMe: true,
-            status: 'sending'
-        };
-        setMessages(prev => [...prev, optimisticMsg]);
-
+    const loadMessages = async (chat: Chat) => {
+        setIsAiThinking(true);
         try {
-            const { error: sendError } = await supabase
-                .from('messages')
-                .insert({
-                    content,
-                    sender_id: currentUser.id,
-                    group_id: activeChat.type === 'Group' ? activeChat.id : null,
-                    recipient_id: activeChat.type === 'Direct' ? activeChat.id : null,
-                });
+            let query = supabase.from('messages').select('*');
 
-            if (sendError) throw sendError;
-            setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'sent' } : m));
-
-            if (content.toLowerCase().includes('@ale')) {
-                setIsAiThinking(true);
-
-                const aiTempId = 'ai-temp-' + Date.now();
-                setMessages(prev => [...prev, {
-                    id: aiTempId,
-                    sender_id: '00000000-0000-0000-0000-000000000000',
-                    content: '',
-                    created_at: new Date().toISOString(),
-                    isMe: false,
-                    status: 'sending'
-                }]);
-
-                const response = await fetch('/api/messages/ai', {
-                    method: 'POST',
-                    headers: { 'Content-Type': 'application/json' },
-                    body: JSON.stringify({
-                        message: content,
-                        chatId: activeChat.id,
-                        senderId: currentUser.id,
-                        group_id: activeChat.type === 'Group' ? activeChat.id : null
-                    })
-                });
-
-                if (!response.ok) throw new Error('AI Protocol Failed');
-
-                const reader = response.body?.getReader();
-                if (!reader) return;
-
-                const decoder = new TextDecoder();
-                let streamedContent = '';
-                setIsAiThinking(false);
-
-                while (true) {
-                    const { done, value } = await reader.read();
-                    if (done) break;
-
-                    const chunk = decoder.decode(value);
-                    streamedContent += chunk;
-
-                    setMessages(prev => prev.map(m => m.id === aiTempId ? { ...m, content: streamedContent, status: 'sent' } : m));
-                }
+            if (chat.type === 'Group') {
+                query = query.eq('group_id', chat.id);
+            } else {
+                // Direct message: (Me -> Partner) OR (Partner -> Me)
+                query = query.or(`and(sender_id.eq.${currentUser?.id},recipient_id.eq.${chat.id}),and(sender_id.eq.${chat.id},recipient_id.eq.${currentUser?.id})`);
             }
 
-        } catch (err) {
-            console.error('Send error:', err);
-            setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
+            const { data, error } = await query.order('created_at', { ascending: true });
+
+            if (data) {
+                setMessages(data.map((m: any) => ({
+                    ...m,
+                    isMe: m.sender_id === currentUser?.id,
+                    status: 'sent'
+                })));
+            }
+        } finally {
             setIsAiThinking(false);
         }
     };
 
     const searchArchaeologists = async (query: string) => {
         setSearchQuery(query);
-        if (query.length < 3) {
+        if (query.length < 2) {
             setSearchResults([]);
             return;
         }
@@ -239,51 +262,95 @@ export default function MessagesPage() {
             .ilike('full_name', `%${query}%`)
             .limit(5);
 
-        if (data) setSearchResults(data);
+        setSearchResults(data || []);
         setIsSearching(false);
     };
 
     const startDirectChat = (profile: Profile) => {
-        const newChat: Chat = {
-            id: profile.id,
-            name: profile.full_name,
-            type: 'Direct',
-            online: true
-        };
-        setChats(prev => [newChat, ...prev.filter(c => c.id !== newChat.id)]);
-        setActiveChat(newChat);
+        const existing = chats.find(c => c.id === profile.id);
+        if (existing) {
+            setActiveChat(existing);
+        } else {
+            const newChat: Chat = {
+                id: profile.id,
+                name: profile.full_name,
+                type: 'Direct',
+                lastMessage: 'New scholar connection établie...',
+                online: true
+            };
+            setChats(prev => [newChat, ...prev]);
+            setActiveChat(newChat);
+        }
         setSearchQuery('');
         setSearchResults([]);
+    };
+
+    const handleSendMessage = async (e: React.FormEvent) => {
+        e.preventDefault();
+        if (!messageText.trim() || !activeChat || !currentUser) return;
+
+        const text = messageText;
+        setMessageText('');
+
+        const tempId = Date.now().toString();
+        const newMessage: Message = {
+            id: tempId,
+            sender_id: currentUser.id,
+            content: text,
+            created_at: new Date().toISOString(),
+            isMe: true,
+            status: 'sending'
+        };
+
+        setMessages(prev => [...prev, newMessage]);
+
+        try {
+            const { error } = await supabase
+                .from('messages')
+                .insert({
+                    sender_id: currentUser.id,
+                    content: text,
+                    [activeChat.type === 'Group' ? 'group_id' : 'recipient_id']: activeChat.id
+                });
+
+            if (error) throw error;
+
+            setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'sent' } : m));
+        } catch (error) {
+            console.error('Send error:', error);
+            setMessages(prev => prev.map(m => m.id === tempId ? { ...m, status: 'error' } : m));
+        }
     };
 
     return (
         <div className={styles.container}>
             <aside className={styles.chatList}>
                 <div className={styles.listHeader}>
-                    <h2 className={styles.listTitle}>RESEARCH NETWORK</h2>
-                    <div style={{
-                        width: 8, height: 8,
-                        borderRadius: '50%',
-                        background: isConnected ? '#00A36C' : '#DC2626',
-                        boxShadow: isConnected ? '0 0 8px #00A36C' : 'none'
-                    }} title={isConnected ? "Secure Uplink Active" : "Connection Lost"} />
+                    <h2 className={styles.listTitle}>SIGNAL CHANNELS</h2>
+                    <div className={styles.connectionStatus}>
+                        <div className={`${styles.statusDot} ${isConnected ? styles.online : styles.offline}`} />
+                        <span>{isConnected ? 'ENCRYPTED' : 'OFFLINE'}</span>
+                    </div>
                 </div>
 
                 <div className={styles.searchBox}>
                     <Input
-                        placeholder="Search archaeologists..."
+                        placeholder="Search researchers..."
                         value={searchQuery}
                         onChange={(e) => searchArchaeologists(e.target.value)}
                         variant="dark"
                         className={styles.searchInput}
                     />
-                    {isSearching && <div className={styles.loader}>SEARCHING...</div>}
+                    {isSearching && <div className={styles.loader}>SCANNING...</div>}
                     {searchResults.length > 0 && (
                         <div className={styles.searchResults}>
                             {searchResults.map(p => (
                                 <div key={p.id} className={styles.searchItem} onClick={() => startDirectChat(p)}>
-                                    <span className={styles.searchName}>{p.full_name}</span>
-                                    <span className={styles.searchInst}>{p.institution}</span>
+                                    <div className={styles.miniAvatar}>{p.full_name?.charAt(0)}</div>
+                                    <div className={styles.searchDetails}>
+                                        <span className={styles.searchName}>{p.full_name}</span>
+                                        <span className={styles.searchInst}>{p.institution}</span>
+                                    </div>
                                 </div>
                             ))}
                         </div>
@@ -291,21 +358,34 @@ export default function MessagesPage() {
                 </div>
 
                 <div className={styles.chats}>
-                    {chats.map((chat) => (
-                        <div
-                            key={chat.id}
-                            className={`${styles.chatItem} ${activeChat?.id === chat.id ? styles.active : ''}`}
-                            onClick={() => setActiveChat(chat)}
-                        >
-                            <div className={styles.avatar}>{chat.name.charAt(0)}</div>
-                            <div className={styles.chatInfo}>
-                                <div className={styles.chatHeader}>
-                                    <span className={styles.chatName}>{chat.name}</span>
-                                </div>
-                                <span className={styles.lastMsg}>{chat.lastMessage || 'Connected to archive...'}</span>
-                            </div>
+                    {isLoading ? (
+                        <div className={styles.listLoading}>
+                            <RotateCcw className={styles.spin} size={20} />
+                            <span>SYNCING CHANNELS...</span>
                         </div>
-                    ))}
+                    ) : (
+                        chats.map((chat) => (
+                            <motion.div
+                                key={chat.id}
+                                layout
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={{ opacity: 1, x: 0 }}
+                                className={`${styles.chatItem} ${activeChat?.id === chat.id ? styles.active : ''}`}
+                                onClick={() => setActiveChat(chat)}
+                            >
+                                <div className={`${styles.avatar} ${chat.type === 'Group' ? styles.groupAvatar : ''}`}>
+                                    {chat.type === 'Group' ? <Users size={16} /> : chat.name.charAt(0)}
+                                </div>
+                                <div className={styles.chatInfo}>
+                                    <div className={styles.chatHeader}>
+                                        <span className={styles.chatName}>{chat.name}</span>
+                                        <span className={styles.chatType}>{chat.type.toUpperCase()}</span>
+                                    </div>
+                                    <span className={styles.lastMsg}>{chat.lastMessage}</span>
+                                </div>
+                            </motion.div>
+                        ))
+                    )}
                 </div>
             </aside>
 
@@ -314,88 +394,66 @@ export default function MessagesPage() {
                     <>
                         <header className={styles.chatPanelHeader}>
                             <div className={styles.activeUser}>
-                                <div className={styles.avatar}>{activeChat.name.charAt(0)}</div>
+                                <div className={`${styles.avatar} ${activeChat.type === 'Group' ? styles.groupAvatar : ''}`}>
+                                    {activeChat.type === 'Group' ? <Users size={20} /> : activeChat.name.charAt(0)}
+                                </div>
                                 <div>
                                     <h3 className={styles.activeName}>{activeChat.name}</h3>
-                                    <span className={styles.activeStatus}>{isConnected ? 'SECURE CONNECTION ACTIVE' : 'RECONNECTING...'}</span>
+                                    <span className={styles.activeStatus}>
+                                        {activeChat.type === 'Group' ? 'COALITION CHANNEL' : 'DIRECT SCHOLAR LINK'}
+                                    </span>
                                 </div>
+                            </div>
+                            <div className={styles.headerActions}>
+                                <Button variant="ghost" size="sm" onClick={() => router.push(activeChat.type === 'Direct' ? `/profile/${activeChat.id}` : '/teams')}>
+                                    {activeChat.type === 'Direct' ? 'Dossier' : 'Manage'}
+                                </Button>
                             </div>
                         </header>
 
                         <div className={styles.messageHistory} ref={scrollRef}>
                             <div className={styles.encryptionInfo}>
                                 <Lock size={12} strokeWidth={2.5} />
-                                END-TO-END ENCRYPTION (E2EE) ESTABLISHED
+                                ARCHIVAL E2EE CHANNEL SECURED
                             </div>
 
-                            {messages.map((msg) => (
-                                <div key={msg.id} className={`${styles.messageWrapper} ${msg.isMe ? styles.isMe : ''}`}>
-                                    <div className={styles.message} style={{ opacity: msg.status === 'sending' ? 0.7 : 1 }}>
-                                        <div className={styles.senderName}>
-                                            {msg.sender_id === '00000000-0000-0000-0000-000000000000' ? '@ALE (SCHOLAR)' : (msg.isMe ? 'ME' : 'RESEARCHER')}
-                                            {msg.status === 'error' && (
-                                                <button
-                                                    style={{ color: '#DC2626', background: 'none', border: 'none', cursor: 'pointer', fontSize: '9px', fontWeight: 800, marginLeft: '8px' }}
-                                                    onClick={(e) => {
-                                                        e.stopPropagation();
-                                                        handleSendMessage(e, msg.content);
-                                                        setMessages(p => p.filter(m => m.id !== msg.id));
-                                                    }}
-                                                >
-                                                    RETRY ↻
-                                                </button>
-                                            )}
-                                        </div>
-                                        <div className={styles.messageContent}>
-                                            {msg.content.includes('<think>') ? (
-                                                <>
-                                                    <div className={styles.reasoningBlock}>
-                                                        <span className={styles.reasoningLabel}>AI CHAIN-OF-THOUGHT</span>
-                                                        {msg.content.match(/<think>([\s\S]*?)<\/think>/)?.[1] || msg.content.split('</think>')[0].replace('<think>', '')}
-                                                        {!msg.content.includes('</think>') && <span className="animate-pulse">...</span>}
-                                                    </div>
-                                                    <div>{msg.content.split('</think>')[1] || ''}</div>
-                                                </>
-                                            ) : (
-                                                msg.content
-                                            )}
-                                        </div>
-
-                                        {msg.artifact_id && (
-                                            <div className={styles.sharedArtifact}>
-                                                <div className={styles.sharedIcon}><FileText size={20} /></div>
-                                                <div className={styles.sharedInfo}>
-                                                    <span className={styles.sharedTitle}>Official Artifact Dossier</span>
-                                                    <span className={styles.sharedLabel}>CATALOG ID: {msg.artifact_id.split('-')[0].toUpperCase()}</span>
-                                                </div>
-                                                <Button
-                                                    variant="outline"
-                                                    size="sm"
-                                                    onClick={() => router.push(`/report/${msg.artifact_id}`)}
-                                                >
-                                                    Open
-                                                </Button>
+                            <AnimatePresence mode="popLayout">
+                                {messages.map((msg, index) => (
+                                    <motion.div
+                                        key={msg.id || index}
+                                        initial={{ opacity: 0, y: 10, scale: 0.95 }}
+                                        animate={{ opacity: 1, y: 0, scale: 1 }}
+                                        layout
+                                        className={`${styles.messageWrapper} ${msg.isMe ? styles.isMe : ''}`}
+                                    >
+                                        <div className={styles.message} style={{ opacity: msg.status === 'sending' ? 0.7 : 1 }}>
+                                            <div className={styles.senderName}>
+                                                {msg.sender_id === '00000000-0000-0000-0000-000000000000' ? '@ALE (SCHOLAR)' : (msg.isMe ? 'ME' : 'RESEARCHER')}
                                             </div>
-                                        )}
-
-                                        <span className={styles.timestamp}>
-                                            {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                                        </span>
-                                    </div>
-                                </div>
-                            ))}
+                                            <div className={styles.messageContent}>
+                                                {msg.content}
+                                            </div>
+                                            <span className={styles.timestamp}>
+                                                {new Date(msg.created_at).toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                                            </span>
+                                        </div>
+                                    </motion.div>
+                                ))}
+                            </AnimatePresence>
 
                             {isAiThinking && (
-                                <div className={`${styles.messageWrapper}`}>
-                                    <div className={styles.message} style={{ background: 'transparent', border: 'none', paddingLeft: 0 }}>
-                                        <span style={{ fontSize: '11px', color: 'var(--gold-primary)', fontFamily: 'monospace', display: 'flex', gap: '4px' }}>
-                                            <span className={styles.pulse}>●</span>
-                                            <span className={styles.pulse} style={{ animationDelay: '0.2s' }}>●</span>
-                                            <span className={styles.pulse} style={{ animationDelay: '0.4s' }}>●</span>
-                                            ALE IS ANALYZING ARCHIVES...
-                                        </span>
+                                <motion.div
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className={styles.messageWrapper}
+                                >
+                                    <div className={styles.aiLoading}>
+                                        <div className={styles.aiPulse} />
+                                        <div className={styles.aiPulse} style={{ animationDelay: '0.2s' }} />
+                                        <div className={styles.aiPulse} style={{ animationDelay: '0.4s' }} />
+                                        ALE SCANNING ARCHIVES...
                                     </div>
-                                </div>
+                                </motion.div>
                             )}
                         </div>
 
@@ -403,7 +461,7 @@ export default function MessagesPage() {
                             <form className={styles.inputWrapper} onSubmit={handleSendMessage}>
                                 <input
                                     type="text"
-                                    placeholder={isConnected ? "Transmit scholarly data... (Mention @ale for assistance)" : "Connection lost. Reconnecting..."}
+                                    placeholder="Transmit research data..."
                                     className={styles.msgInput}
                                     value={messageText}
                                     onChange={(e) => setMessageText(e.target.value)}
@@ -415,11 +473,13 @@ export default function MessagesPage() {
                     </>
                 ) : (
                     <div className={styles.emptyState}>
-                        <div className={styles.emptyIcon}><MessageSquare size={48} strokeWidth={1} /></div>
-                        <p>SELECT A CHANNEL TO BEGIN COMMUNICATION</p>
+                        <MessageSquare size={64} strokeWidth={0.5} className={styles.emptyIcon} />
+                        <h3>COMMUNICATION HUB</h3>
+                        <p>Select a coalition member or research group to begin data transmission.</p>
                     </div>
                 )}
             </main>
         </div>
     );
 }
+

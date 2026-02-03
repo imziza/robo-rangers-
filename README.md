@@ -21,36 +21,28 @@ The core repository for all digital specimens.
 ### 🔬 Artifact Laboratory (AI Analysis)
 Leverage cutting-edge AI models for high-fidelity specimen analysis.
 - **AI Engine**: Powered by **OpenRouter (DeepSeek R1 Chimera)** for advanced reasoning and scholarly hypothesis generation.
-- **Multi-Phase Scanning**:
-  1. Initializing Optical Sensors
-  2. Spectrographic Signature Mapping
-  3. Material Composition Identification
-  4. Global Antiquity Database Cross-Referencing (via **Smithsonian Open Access**)
-  5. AI-Driven Scholarly Hypothesis Generation
-- **Field Observations**: Integrated stratigraphic and contextual note-taking.
+- **Multi-Phase Scanning**: Spectrographic Signature Mapping, Material Composition Identification, and Global Antiquity Database Cross-Referencing.
 
-### 🗺 Arch-Atlas (GIS)
-Advanced geospatial visualization and excavation planning.
-- **Temporal Mapping**: Visualize archaeological sites across a timeline from 2000 BCE to 2000 CE.
-- **Satellite GPS Linking**: Real-time L-Band satellite synchronization for precise site coordinates.
-- **Layer Management**: Toggleable layers for topography, hydrology, and coordinate grids.
-- **Excavation Planning**: Define and initialize new extraction protocols directly from the map.
+### 🗺 Arch-Atlas (Cinematic GIS)
+**Newly Redesigned Cinematic HUD** experience for maximum map immersion.
+- **Cinematic HUD**: Floating glassmorphism controls with entrance animations.
+- **Universal Search**: Geocoding search to fly anywhere on the globe instantly.
+- **Ancient Site Plans**: 2D ruins overlays (Giza, Rome) on satellite imagery.
+- **Discovery Timeline**: Granular timeline with discovery dots marking pinpoint artifact finds.
+- **Temporal Mapping**: Visualize civilizations and events from 3300 BCE to 1600 CE.
 
 ### 👥 Collaboration & Discovery
-- **Research Teams**: Manage scholarly groups and institutional permissions.
-- **Secure Messaging**: Real-time communication and artifact sharing between researchers.
-- **Discovery Engine**: Intelligent search and exploration of the global artifact database, integrated with the **Smithsonian Open Access API** for comparative study.
+- **Discovery Engine**: Intelligent search and exploration integrated with **Smithsonian Open Access API**.
+- **Citation Log**: Automated academic source generation for research integrity.
 
 ---
 
 ## 🛠 Technology Stack
 
 - **Frontend**: [Next.js](https://nextjs.org/) 15 (App Router), [React](https://react.dev/) 19, [Framer Motion](https://www.framer.com/motion/)
-- **Styling**: Tailwind CSS / CSS Modules
 - **Backend**: [Supabase](https://supabase.com/) (PostgreSQL, Auth, Real-time RLS)
 - **Mapping**: [MapLibre GL](https://maplibre.org/)
 - **Desktop**: [Electron](https://www.electronjs.org/)
-- **Icons**: [Lucide React](https://lucide.dev/)
 
 ---
 
@@ -59,14 +51,13 @@ Advanced geospatial visualization and excavation planning.
 ### Prerequisites
 - Node.js (Latest LTS)
 - NPM or Bun
-- A Supabase account and project
 
 ### Installation
 
 1. **Clone the repository**:
    ```bash
-   git clone https://github.com/your-org/aletheon.git
-   cd aletheon
+   git clone https://github.com/imziza/robo-rangers-.git
+   cd robo-rangers-
    ```
 
 2. **Install dependencies**:
@@ -74,58 +65,57 @@ Advanced geospatial visualization and excavation planning.
    npm install
    ```
 
-3. **Environment Configuration**:
-   Create a `.env.local` file in the root directory and populate it with your API keys:
-   ```env
-   # Supabase
-   NEXT_PUBLIC_SUPABASE_URL=your_supabase_url
-   NEXT_PUBLIC_SUPABASE_ANON_KEY=your_anon_key
-   SUPABASE_SERVICE_ROLE_KEY=your_service_role_key
+---
 
-   # AI Analysis (OpenRouter)
-   OPENROUTER_API_KEY=your_openrouter_key
-   OPENROUTER_MODEL=tngtech/deepseek-r1t2-chimera:free
+## 🚀 Deployment & Running
 
-   # Smithsonian Data
-   SMITHSONIAN_API_KEY=your_smithsonian_key
-   ```
-
-4. **Database Setup**:
-   - Create a new project in [Supabase](https://app.supabase.com/).
-   - Execute the contents of `schema.sql` in the Supabase SQL Editor.
-
-### Running Locally
-
-**Web Development:**
+### Development Mode
+Runs the app with hot-reloading for development.
 ```bash
 npm run dev
 ```
 
-**Electron Development:**
-```bash
-npm run electron:dev
-```
+### Production Mode (OPTIMIZED)
+For maximum performance and deployment, follow these steps:
 
-### Building for Production
+1. **Build the application**:
+   ```bash
+   npm run build
+   ```
+   *This compiles the TypeScript code and optimizes images/assets for production.*
 
-**Web Build:**
-```bash
-npm run build
-```
+2. **Start the production server**:
+   ```bash
+   npm start
+   ```
+   *The app will be served on [http://localhost:3000](http://localhost:3000).*
 
-**Desktop Build:**
-```bash
-npm run electron:build
-```
+### Desktop (EXE) Build & Install
+To run Aletheon as a standalone desktop application:
+
+1. **Install Electron dependencies**:
+   ```bash
+   npm install --save-dev electron electron-builder
+   ```
+
+2. **Run in development**:
+   ```bash
+   npm run electron:dev
+   ```
+
+3. **Build for production (Windows .exe)**:
+   ```bash
+   npm run electron:build
+   ```
+   *The generated installer will be located in the `/dist` directory.*
 
 ---
 
 ## 📊 Database Architecture
 Aletheon utilizes a robust PostgreSQL schema managed via Supabase:
-- `profiles`: Extended user metadata and institutional affiliations.
-- `artifacts`: Core specimen data, including AI-generated reports and metadata.
-- `artifact_images`: High-resolution imagery for specimens.
-- `groups` & `group_members`: Team management and permissions.
+- `profiles`: User metadata and institutional affiliations.
+- `artifacts`: Core specimen data and AI reports.
+- `groups`: Research team management.
 - `messages`: Real-time collaborative communication.
 
 ---
@@ -133,19 +123,14 @@ Aletheon utilizes a robust PostgreSQL schema managed via Supabase:
 ## 📸 Interface Preview
 
 <div align="center">
-  <img src="screenshots/screen.png" width="45%" alt="Login Page" />
-  <img src="screenshots/screen1.png" width="45%" alt="Dashboard" />
-  <br />
-  <img src="screenshots/screen2.png" width="45%" alt="Atlas View" />
-  <img src="screenshots/screen3.png" width="45%" alt="Analysis Lab" />
+  <p><i>The Cinematic Atlas Redesign</i></p>
+  <img src="https://raw.githubusercontent.com/imziza/robo-rangers-/main/public/screenshots/atlas_cinematic.png" width="90%" alt="Cinematic Atlas View" />
 </div>
-
-*(For more detailed views, please refer to the `/screenshots` directory)*
 
 ---
 
 ## 📄 License
-This project is licensed under the MIT License - see the LICENSE file for details.
+MIT License.
 
 ---
-© 2025 Aletheon Development Team | Securing the Past for the Future.
+© 2025 Aletheon | Securing the Past for the Future.

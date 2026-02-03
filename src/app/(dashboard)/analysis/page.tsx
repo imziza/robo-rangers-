@@ -31,6 +31,30 @@ export default function AnalysisPage() {
         setImages(prev => [...prev, ...newImages]);
     };
 
+    const removeImage = (id: string) => {
+        setImages(prev => prev.filter(img => img.id !== id));
+    };
+
+    const requestGPS = () => {
+        if ('geolocation' in navigator) {
+            navigator.geolocation.getCurrentPosition(
+                (position) => {
+                    setLocation({
+                        lat: position.coords.latitude,
+                        lng: position.coords.longitude,
+                        accuracy: position.coords.accuracy
+                    });
+                },
+                (error) => {
+                    console.error('GPS Error:', error);
+                    alert('GEOSPATIAL LINK FAILED: Please ensure location permissions are granted.');
+                }
+            );
+        } else {
+            alert('GEOSPATIAL ERROR: This device does not support satellite positioning.');
+        }
+    };
+
     const startAnalysis = async () => {
         if (images.length === 0) return;
         setIsAnalyzing(true); setAnalysisProgress(0);
@@ -49,7 +73,7 @@ export default function AnalysisPage() {
                 localStorage.setItem('vault_catalog', JSON.stringify([artifactData, ...catalog]));
                 clearInterval(progressInterval); setAnalysisProgress(100);
                 setTimeout(() => router.push(`/report/${result.artifactId}`), 1000);
-            } else throw new Error(result.error);
+            } else throw new Error(result.details || result.error);
         } catch (error: any) { alert(`Analysis Failed: ${error.message}`); setIsAnalyzing(false); clearInterval(progressInterval); }
     };
 
@@ -76,14 +100,43 @@ export default function AnalysisPage() {
                                             <span className={styles.uploadHint}>Drag and drop or click to browse</span>
                                         </div>
                                     </div>
+
+                                    {images.length > 0 && (
+                                        <div className={styles.imageGrid}>
+                                            {images.map(img => (
+                                                <div key={img.id} className={styles.imageItem}>
+                                                    <img src={img.preview} alt="Specimen" />
+                                                    <button className={styles.removeBtn} onClick={() => removeImage(img.id)}>×</button>
+                                                </div>
+                                            ))}
+                                        </div>
+                                    )}
                                 </section>
+
                                 <section className={styles.section}>
                                     <h2 className={styles.sectionTitle}>
                                         <FileText size={16} className={styles.inlineIcon} />
                                         02 FIELD OBSERVATIONS
                                     </h2>
                                     <Textarea placeholder="INPUT STRATIGRAPHIC OBSERVATIONS..." value={notes} onChange={(e) => setNotes(e.target.value)} variant="dark" />
+
+                                    <div className={styles.locationBox}>
+                                        {location ? (
+                                            <div className={styles.locationGranted}>
+                                                <div className={styles.pulse} />
+                                                <div className={styles.locationDetails}>
+                                                    <span className={styles.locationLabel}>L-BAND SATELLITE LINK ESTABLISHED</span>
+                                                    <span className={styles.locationCoords}>LAT: {location.lat.toFixed(6)}° N | LNG: {location.lng.toFixed(6)}° E</span>
+                                                </div>
+                                            </div>
+                                        ) : (
+                                            <Button variant="outline" fullWidth onClick={requestGPS}>
+                                                INITIALIZE GEOSPATIAL LINK
+                                            </Button>
+                                        )}
+                                    </div>
                                 </section>
+
                                 <Button
                                     variant="primary"
                                     fullWidth
@@ -138,6 +191,18 @@ export default function AnalysisPage() {
                         )}
                     </AnimatePresence>
                 </div>
+
+                <aside className={styles.analysisSidebar}>
+                    <div className={styles.analysisCard}>
+                        <div className={styles.statusIndicator}>
+                            <div className={styles.pulse} />
+                            LAB STATUS: ACTIVE
+                        </div>
+                        <p className={styles.disclaimer}>
+                            Initialize optical sensors and field observations to generate a high-fidelity digital specimen report. Our AI-driven hypothesis engine utilizes L-Band satellite data and spectrographic mapping to ensure archival integrity.
+                        </p>
+                    </div>
+                </aside>
             </div>
         </div>
     );
