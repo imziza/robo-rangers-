@@ -3,7 +3,7 @@
 .container {
     display: flex;
     min-height: 100vh;
-    background-color: var(--bg-dark);
+    background-color: var(--bg-main);
 }
 
 /* Sidebar */

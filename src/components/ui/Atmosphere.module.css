@@ -5,9 +5,10 @@
     pointer-events: none;
     overflow: hidden;
     background-color: var(--bg-main);
-    transition: background-color var(--transition-slow);
+    transition: background-color 0.8s ease;
 }
 
+/* --- AMBIENT THEME --- */
 .ambientWrapper {
     position: absolute;
     inset: 0;
@@ -46,36 +47,97 @@
     animation: drift 30s ease-in-out infinite alternate;
 }
 
-@keyframes drift {
-    from { transform: translate(0, 0) scale(1); }
-    to { transform: translate(10%, 10%) scale(1.1); }
+/* --- AURORA THEME --- */
+.auroraWrapper {
+    position: absolute;
+    inset: 0;
+    filter: blur(60px);
 }
 
-.stars {
+.aurora1 {
+    position: absolute;
+    top: -20%;
+    left: 20%;
+    width: 80%;
+    height: 50%;
+    background: linear-gradient(90deg, rgba(80, 20, 100, 0.1), rgba(212, 175, 55, 0.05));
+    animation: auroraFlow 15s linear infinite;
+    transform: rotate(-10deg);
+}
+
+.aurora2 {
+    position: absolute;
+    bottom: -20%;
+    right: 20%;
+    width: 80%;
+    height: 50%;
+    background: linear-gradient(90deg, rgba(59, 130, 246, 0.05), rgba(80, 20, 100, 0.1));
+    animation: auroraFlow 20s linear infinite reverse;
+    transform: rotate(-10deg);
+}
+
+/* --- MIDNIGHT THEME --- */
+.midnightWrapper {
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(20, 30, 50, 0.2) 0%, transparent 80%);
+}
+
+.voidStars {
     position: absolute;
     inset: 0;
     background-image:
-        radial-gradient(1px 1px at 20px 30px, #fff, rgba(0,0,0,0)),
-        radial-gradient(1px 1px at 40px 70px, #fff, rgba(0,0,0,0)),
-        radial-gradient(1px 1px at 50px 160px, #fff, rgba(0,0,0,0)),
-        radial-gradient(1px 1px at 90px 40px, #fff, rgba(0,0,0,0)),
-        radial-gradient(1px 1px at 130px 80px, #fff, rgba(0,0,0,0)),
-        radial-gradient(1px 1px at 160px 120px, #fff, rgba(0,0,0,0));
-    background-repeat: repeat;
-    background-size: 200px 200px;
-    opacity: 0.03;
-    animation: twinkle 5s ease-in-out infinite alternate;
+        radial-gradient(1px 1px at 50px 50px, #fff, transparent),
+        radial-gradient(2px 2px at 150px 250px, rgba(255, 255, 255, 0.5), transparent);
+    background-size: 400px 400px;
+    opacity: 0.3;
+    animation: twinkle 4s ease-in-out infinite alternate;
+}
+
+/* --- COMMON ANIMATIONS --- */
+@keyframes drift {
+    from {
+        transform: translate(0, 0) scale(1);
+    }
+
+    to {
+        transform: translate(10%, 10%) scale(1.1);
+    }
+}
+
+@keyframes auroraFlow {
+    0% {
+        transform: rotate(-10deg) translateX(-10%);
+        opacity: 0.5;
+    }
+
+    50% {
+        opacity: 0.8;
+    }
+
+    100% {
+        transform: rotate(-10deg) translateX(10%);
+        opacity: 0.5;
+    }
 }
 
 @keyframes twinkle {
-    from { opacity: 0.01; }
-    to { opacity: 0.05; }
+    from {
+        opacity: 0.1;
+    }
+
+    to {
+        opacity: 0.4;
+    }
 }
 
+/* Global Noise */
 .noise {
     position: absolute;
     inset: 0;
-    background-image: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)'/%3E%3C/svg%3E");
-    opacity: 0.02;
+    background-image: var(--texture-noise);
+    opacity: 0.05;
+    pointer-events: none;
     mix-blend-mode: overlay;
+    z-index: 9000;
 }

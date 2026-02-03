@@ -1,31 +1,39 @@
-/* Button Component Styles */
+/* Button.module.css - Hyper-Realistic Upgrade */
 
 .button {
     display: inline-flex;
     align-items: center;
     justify-content: center;
     gap: var(--space-2);
-    font-family: var(--font-body);
+    font-family: var(--font-ui);
     font-weight: 500;
     border: none;
     border-radius: var(--radius-md);
     cursor: pointer;
-    transition: all var(--transition-base);
+    transition: all var(--transition-fast);
     text-transform: uppercase;
-    letter-spacing: var(--tracking-wide);
+    letter-spacing: 0.05em;
     white-space: nowrap;
     position: relative;
     overflow: hidden;
+    backdrop-filter: blur(4px);
+    z-index: 1;
+}
+
+/* Base Physics */
+.button:active:not(:disabled) {
+    transform: scale(0.98);
 }
 
 .button:disabled {
     opacity: 0.5;
     cursor: not-allowed;
+    filter: grayscale(100%);
 }
 
 .button:focus-visible {
-    outline: 2px solid var(--gold-primary);
-    outline-offset: 2px;
+    outline: none;
+    box-shadow: 0 0 0 2px var(--bg-main), 0 0 0 4px var(--gold-primary);
 }
 
 /* Sizes */
@@ -36,73 +44,85 @@
 }
 
 .md {
-    height: 44px;
-    padding: 0 var(--space-6);
+    height: 40px;
+    padding: 0 var(--space-4);
     font-size: var(--text-sm);
 }
 
 .lg {
-    height: 52px;
-    padding: 0 var(--space-8);
+    height: 48px;
+    padding: 0 var(--space-6);
     font-size: var(--text-base);
 }
 
-/* Variants */
+/* --- VARIANTS --- */
+
+/* PRIMARY: "Gold Plated" */
 .primary {
-    background: linear-gradient(135deg, var(--gold-primary), var(--gold-secondary));
-    color: var(--bg-dark);
-    box-shadow: 0 2px 8px rgba(201, 162, 39, 0.3);
+    background: linear-gradient(135deg, var(--gold-primary) 0%, var(--gold-secondary) 100%);
+    color: #000;
+    box-shadow:
+        0 4px 12px rgba(201, 162, 39, 0.3),
+        inset 0 1px 0 rgba(255, 255, 255, 0.4);
+    border: 1px solid rgba(0, 0, 0, 0.1);
 }
 
 .primary:hover:not(:disabled) {
-    background: linear-gradient(135deg, var(--gold-secondary), var(--gold-hover));
-    box-shadow: 0 4px 16px rgba(201, 162, 39, 0.4);
+    background: linear-gradient(135deg, var(--gold-hover) 0%, var(--gold-primary) 100%);
+    box-shadow:
+        0 6px 20px rgba(201, 162, 39, 0.4),
+        inset 0 1px 0 rgba(255, 255, 255, 0.5);
     transform: translateY(-1px);
 }
 
-.primary:active:not(:disabled) {
-    transform: translateY(0);
-}
-
+/* SECONDARY: "Frosted Glass" */
 .secondary {
-    background-color: var(--bg-elevated);
+    background: rgba(255, 255, 255, 0.05);
     color: var(--text-primary);
-    border: 1px solid var(--text-tertiary);
+    border: 1px solid var(--border-color);
+    box-shadow: var(--shadow-base);
 }
 
 .secondary:hover:not(:disabled) {
-    background-color: var(--bg-card-hover);
-    border-color: var(--gold-primary);
+    background: rgba(255, 255, 255, 0.1);
+    border-color: var(--gold-muted);
     color: var(--gold-primary);
 }
 
+/* GHOST: "Interactive Void" */
 .ghost {
-    background-color: transparent;
+    background: transparent;
     color: var(--text-secondary);
 }
 
 .ghost:hover:not(:disabled) {
-    background-color: var(--bg-card);
-    color: var(--gold-primary);
+    background: rgba(255, 255, 255, 0.03);
+    color: var(--text-primary);
 }
 
+/* OUTLINE: "Etched" */
 .outline {
-    background-color: transparent;
+    background: transparent;
+    border: 1px solid var(--gold-muted);
     color: var(--gold-primary);
-    border: 1px solid var(--gold-primary);
 }
 
 .outline:hover:not(:disabled) {
-    background-color: var(--gold-muted);
+    border-color: var(--gold-primary);
+    background: rgba(201, 162, 39, 0.05);
+    box-shadow: 0 0 15px rgba(201, 162, 39, 0.1);
 }
 
+/* DANGER: "Critical Mass" */
 .danger {
-    background-color: var(--status-critical);
-    color: white;
+    background: rgba(239, 68, 68, 0.15);
+    color: #EF4444;
+    border: 1px solid rgba(239, 68, 68, 0.3);
 }
 
 .danger:hover:not(:disabled) {
-    background-color: #DC2626;
+    background: rgba(239, 68, 68, 0.25);
+    box-shadow: 0 0 15px rgba(239, 68, 68, 0.2);
 }
 
 /* Full Width */
@@ -116,9 +136,9 @@
 }
 
 .spinner {
-    width: 18px;
-    height: 18px;
-    animation: spin 1s linear infinite;
+    width: 16px;
+    height: 16px;
+    animation: spin 0.8s linear infinite;
 }
 
 .spinner svg {
@@ -144,20 +164,26 @@
 }
 
 .icon svg {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
 }
 
 .label {
-    display: flex;
-    align-items: center;
+    position: relative;
+    z-index: 2;
 }
 
-/* Arrow animation for primary buttons */
-.primary .icon:last-child {
-    transition: transform var(--transition-fast);
+/* Inner Glow Effect for Primary */
+.primary::before {
+    content: '';
+    position: absolute;
+    inset: 0;
+    background: radial-gradient(circle at center, rgba(255, 255, 255, 0.4) 0%, transparent 70%);
+    opacity: 0;
+    transition: opacity 0.3s ease;
+    mix-blend-mode: overlay;
 }
 
-.primary:hover:not(:disabled) .icon:last-child {
-    transform: translateX(4px);
+.primary:hover::before {
+    opacity: 1;
 }

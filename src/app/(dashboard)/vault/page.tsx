@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
 import { createSupabaseBrowserClient } from '@/lib/supabase';
 import { ArtifactCard } from '@/components/ui/Card';
+import { Panel } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
 import { Shield, Sparkles, Database, History, Zap, Filter, ChevronRight, Plus } from 'lucide-react';
 import styles from './page.module.css';
@@ -155,17 +156,17 @@ export default function VaultPage() {
 
             {/* Main Content */}
             <main className={styles.mainContent}>
-                <motion.div
+                <Panel
+                    variant="glass"
+                    padding="lg"
+                    elevation={2}
                     className={styles.contentHeader}
-                    initial={{ opacity: 0, scale: 0.98 }}
-                    animate={{ opacity: 1, scale: 1 }}
-                    transition={{ duration: 0.5 }}
                 >
                     <div className={styles.activeAnalysis}>
                         {selectedArtifact ? (
                             <>
                                 <div className={styles.activeHeaderTop}>
-                                    <span className={styles.activeLabel}>SELECTED SPECIMEN</span>
+                                    <span className={styles.activeLabel}>Selected Specimen</span>
                                     <span className={styles.headerDots}></span>
                                     <div className={styles.headerIntegrity}>
                                         <div className={styles.integrityBar}>
@@ -175,41 +176,46 @@ export default function VaultPage() {
                                                 animate={{ width: `${Math.round((selectedArtifact.confidence_score || 0) * 100)}%` }}
                                             />
                                         </div>
-                                        <span className={styles.integrityText}>INTEGRITY: {Math.round((selectedArtifact.confidence_score || 0) * 100)}%</span>
+                                        <span className={styles.integrityText}>{Math.round((selectedArtifact.confidence_score || 0) * 100)}% Integrity</span>
                                     </div>
                                 </div>
                                 <h1 className={styles.activeTitle}>{selectedArtifact.title}</h1>
+
                                 <div className={styles.activeHeaderMeta}>
-                                    <div className={styles.headerMetaPoint}>
-                                        <span className={styles.metaLabel}>ID:</span>
-                                        <span className={styles.metaValue}>{selectedArtifact.id.slice(0, 8)}...</span>
+                                    <div className={styles.metaGroup}>
+                                        <span className={styles.metaLabel}>ID</span>
+                                        <span className={styles.metaValue}>{selectedArtifact.id.slice(0, 8)}</span>
                                     </div>
-                                    <span className={styles.metaSeptum}>|</span>
-                                    <div className={styles.headerMetaPoint}>
-                                        <span className={styles.metaLabel}>ERA:</span>
-                                        <span className={styles.metaValue}>{selectedArtifact.era || 'PENDING'}</span>
+                                    <div className={styles.metaDivider} />
+                                    <div className={styles.metaGroup}>
+                                        <span className={styles.metaLabel}>Era</span>
+                                        <span className={styles.metaValue}>{selectedArtifact.era || 'Pending Analysis'}</span>
                                     </div>
-                                    <span className={styles.metaSeptum}>|</span>
-                                    <div className={styles.headerMetaPoint}>
-                                        <span className={styles.metaLabel}>DOMAIN:</span>
-                                        <span className={styles.metaValue}>{selectedArtifact.material || 'UNCLASSIFIED'}</span>
+                                    <div className={styles.metaDivider} />
+                                    <div className={styles.metaGroup}>
+                                        <span className={styles.metaLabel}>Domain</span>
+                                        <span className={styles.metaValue}>{selectedArtifact.material || 'Unclassified'}</span>
                                     </div>
                                 </div>
                             </>
                         ) : (
-                            <h1 className={styles.activeTitle}>Awaiting Data Selection</h1>
+                            <div className={styles.emptyHeader}>
+                                <h1 className={styles.activeTitle}>Select an Artifact</h1>
+                                <p className={styles.emptySub}>Choose a specimen from the grid to view details.</p>
+                            </div>
                         )}
                     </div>
                     <Button
-                        variant="secondary"
+                        variant="primary"
                         disabled={!selectedArtifact}
                         onClick={() => selectedArtifact && router.push(`/report/${selectedArtifact.id}`)}
                         onMouseEnter={() => selectedArtifact && router.prefetch(`/report/${selectedArtifact.id}`)}
-                        rightIcon={<ChevronRight size={18} />}
+                        rightIcon={<ChevronRight size={16} />}
+                        className={styles.viewDossierBtn}
                     >
-                        View Official Dossier
+                        View Dossier
                     </Button>
-                </motion.div>
+                </Panel>
 
                 <motion.div
                     className={styles.artifactGrid}

@@ -20,7 +20,7 @@
     height: fit-content;
     position: sticky;
     top: var(--space-8);
-    box-shadow: var(--glass-shadow);
+    box-shadow: var(--shadow-base);
 }
 
 [data-theme='ambient'] .filterSidebar {
@@ -90,10 +90,11 @@
 }
 
 .filterTitle {
-    font-family: var(--font-heading);
+    font-family: var(--font-ui);
     font-size: 10px;
+    font-weight: 600;
     color: var(--text-tertiary);
-    letter-spacing: 0.2em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
 }
 
@@ -133,32 +134,18 @@
     gap: var(--space-8);
 }
 
+/* Header Re-Style with Panel integration */
 .contentHeader {
-    background: var(--bg-card);
-    border: 1px solid var(--border-color);
-    border-radius: var(--radius-2xl);
-    padding: var(--space-8) var(--space-10);
     display: flex;
     justify-content: space-between;
     align-items: center;
-    position: relative;
-    overflow: hidden;
-}
-
-.contentHeader::before {
-    content: '';
-    position: absolute;
-    left: 0;
-    top: 0;
-    bottom: 0;
-    width: 4px;
-    background: var(--gold-primary);
+    gap: var(--space-8);
 }
 
 .activeAnalysis {
     display: flex;
     flex-direction: column;
-    gap: 8px;
+    gap: var(--space-4);
     flex: 1;
 }
 
@@ -169,17 +156,22 @@
 }
 
 .activeLabel {
-    font-size: 10px;
+    font-family: var(--font-ui);
+    font-size: 11px;
+    font-weight: 600;
     color: var(--gold-primary);
-    letter-spacing: 0.25em;
+    letter-spacing: 0.1em;
     text-transform: uppercase;
-    white-space: nowrap;
+    background: var(--gold-muted);
+    padding: 4px 8px;
+    border-radius: 4px;
 }
 
 .headerDots {
     flex: 1;
     height: 1px;
-    border-bottom: 1px dotted var(--gold-muted);
+    border-bottom: 1px dashed var(--border-color);
+    opacity: 0.3;
 }
 
 .headerIntegrity {
@@ -189,63 +181,81 @@
 }
 
 .integrityBar {
-    width: 100px;
+    width: 80px;
     height: 4px;
     background: var(--bg-darker);
     border-radius: 2px;
     overflow: hidden;
-    border: 1px solid var(--border-color);
 }
 
 .integrityFill {
     height: 100%;
-    background: linear-gradient(90deg, var(--gold-muted), var(--gold-primary));
-    box-shadow: 0 0 10px var(--gold-glow);
+    background: var(--status-stable);
 }
 
 .integrityText {
-    font-size: 9px;
+    font-family: var(--font-ui);
+    font-size: 11px;
     color: var(--text-tertiary);
-    font-weight: 700;
-    letter-spacing: 0.05em;
+    font-weight: 500;
 }
 
 .activeTitle {
     font-family: var(--font-heading);
     font-size: var(--text-3xl);
     color: var(--text-primary);
-    letter-spacing: -0.01em;
-    margin: 4px 0;
+    letter-spacing: -0.02em;
+    line-height: 1.1;
+    text-shadow: 0 2px 10px rgba(0, 0, 0, 0.2);
 }
 
 .activeHeaderMeta {
     display: flex;
     align-items: center;
-    gap: var(--space-4);
+    gap: var(--space-6);
+    padding-top: var(--space-2);
 }
 
-.headerMetaPoint {
+.metaGroup {
     display: flex;
-    align-items: center;
-    gap: 6px;
+    flex-direction: column;
+    gap: 2px;
 }
 
 .metaLabel {
+    font-family: var(--font-ui);
     font-size: 10px;
     color: var(--text-tertiary);
-    letter-spacing: 0.1em;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
 }
 
 .metaValue {
-    font-size: 11px;
-    color: var(--gold-secondary);
+    font-family: var(--font-body);
+    font-size: 13px;
+    color: var(--text-secondary);
     font-weight: 500;
-    text-transform: uppercase;
 }
 
-.metaSeptum {
-    color: var(--border-color);
-    font-size: 12px;
+.metaDivider {
+    width: 1px;
+    height: 24px;
+    background: var(--border-color);
+}
+
+.viewDossierBtn {
+    flex-shrink: 0;
+}
+
+.emptyHeader {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.emptySub {
+    color: var(--text-tertiary);
+    font-size: var(--text-sm);
 }
 
 /* ===== Artifact Grid ===== */

@@ -19,7 +19,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         localStorage.setItem('aletheon-theme', newTheme);
     };
     const toggleTheme = () => {
-        const modes: ThemeMode[] = ['light', 'dark', 'ambient'];
+        const modes: ThemeMode[] = ['dark', 'light', 'ambient', 'midnight', 'graphite', 'aurora', 'focus', 'high-contrast'];
         const currentIndex = modes.indexOf(theme);
         const nextIndex = (currentIndex + 1) % modes.length;
         setTheme(modes[nextIndex]);
@@ -28,7 +28,7 @@ export function ThemeProvider({ children }: { children: React.ReactNode }) {
         document.documentElement.setAttribute('data-theme', theme);
         document.body.setAttribute('data-theme', theme);
         // Remove all theme classes first
-        const themeClasses = ['theme-light', 'theme-dark', 'theme-ambient'];
+        const themeClasses = ['theme-light', 'theme-dark', 'theme-ambient', 'theme-midnight', 'theme-graphite', 'theme-aurora', 'theme-focus', 'theme-high-contrast'];
         document.body.classList.remove(...themeClasses);
         document.body.classList.add(`theme-${theme}`);
     }, [theme]);
