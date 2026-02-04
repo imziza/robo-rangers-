@@ -1,111 +1,174 @@
-# 🦞 The Beginner's Guide to OpenClaw
+# 🦞 The Book of OpenClaw: A Complete Beginner's Guide
 
-This document is a high-level guide to help you understand how OpenClaw works, how it is structured, and how its different parts communicate.
-
----
-
-## 1. The Big Picture: What is OpenClaw?
-Think of OpenClaw as a **Central Hub** for AI.
-Instead of going to a website to talk to an AI, OpenClaw brings the AI to **you**, wherever you already are (WhatsApp, Telegram, Slack, etc.).
-
-It has three main parts:
-1.  **The Channels**: These are the "ears and mouth." They listen for your messages on Telegram or WhatsApp and send back the AI's replies.
-2.  **The Gateway**: This is the "switchboard." It connects all the different channels to the AI and manages your sessions, settings, and security.
-3.  **The Agent (Pi)**: This is the "brain." It reads your message, thinks about it, and uses tools (like a web browser, a terminal, or a camera) to get you an answer.
+Welcome to the internal world of OpenClaw. This document is a comprehensive, deep-dive guide designed for someone who knows nothing about the project but wants to understand it at a professional level.
 
 ---
 
-## 2. The Project Structure (Where is what?)
-The project is a **Monorepo** (one big box containing smaller boxes). Here is the map:
-
-*   **`src/`**: This is the **heart** of the project. It contains all the core logic.
-    *   `src/gateway/`: The central hub server that coordinates everything.
-    *   `src/agents/`: The AI "brain" logic, tool definitions, and LLM communication.
-    *   `src/channels/`: Shared logic for all chat apps.
-    *   `src/telegram/`, `src/whatsapp/`, `src/slack/`, etc.: Specific code for each app.
-    *   `src/auto-reply/`: The logic that decides *how* and *when* to reply to a message.
-*   **`ui/`**: The web dashboard code (built with Vite and React).
-*   **`apps/`**: The "native" apps for your phone (iPhone/Android) or Mac.
-*   **`packages/`**: Reusable code libraries.
-*   **`extensions/`**: Plugins that add new capabilities (like Microsoft Teams support).
-*   **`scripts/`**: Development tools for building, testing, and releasing.
+## Table of Contents
+1.  **The Master Plan** (What is OpenClaw?)
+2.  **The Architecture** (How do the pieces fit?)
+3.  **The Core Map** (Detailed folder-by-folder walkthrough)
+4.  **VIP Files** (The files that run the show)
+5.  **The Nervous System** (How messages flow)
+6.  **The Brain** (How the AI thinks and uses tools)
+7.  **The Shield** (Security and Sandboxing)
+8.  **The Eyes & Ears** (The Vision and Audio pipeline)
+9.  **The Expandable World** (Plugins and Extensions)
+10. **Native Apps** (Mac, iPhone, and Android)
+11. **The Laboratory** (Building and Testing)
 
 ---
 
-## 3. How things talk to each other (The "Life of a Message")
-Here is what happens when you send a message:
-
-1.  **Reception**: You send "Hello" on Telegram. The code in `src/telegram/` hears this via a Webhook or long-polling.
-2.  **Normalization**: It turns your Telegram message into a standard "OpenClaw Message" (called a `MsgContext`).
-3.  **Routing**: The **Gateway** looks at your message and routes it to the correct **Session**.
-4.  **Thinking**: The **Agent** starts an execution loop. It reads your history and the new message.
-5.  **Streaming**: As the AI thinks, it sends "Events" (updates) over a **WebSocket** (a fast data pipe). This is how the Mac app or Web dashboard shows the AI "typing" in real-time.
-6.  **Reply**: Once the AI generates a final answer, the Gateway sends it back to the channel (Telegram) for delivery.
+## 1. The Master Plan
+OpenClaw is a **Personal AI Assistant**. Unlike standard AI chatbots that live on a website, OpenClaw is **Local-First** and **Multi-Channel**.
+- **Local-First**: It runs on your own hardware (your computer, a server, your phone). You own the data.
+- **Multi-Channel**: It talks to you on apps you already use (WhatsApp, Telegram, Slack, etc.).
 
 ---
 
-## 4. How it was Built
-*   **Language**: **TypeScript**. It's modern JavaScript with "types" to make the code safer and easier to read.
-*   **Runtime**: **Node.js** (version 22+). This runs the server-side code.
-*   **Build Tool**: **pnpm** (for managing packages) and **tsdown** (for compiling TypeScript).
-*   **Cross-Platform Sync**: Uses a **Protocol Generator** (`scripts/protocol-gen.ts`) to ensure the Mac and Mobile apps always understand the Gateway's language.
+## 2. The Architecture
+OpenClaw follows a **"Gateway" Pattern**.
+- **The Gateway**: A central server that stays on 24/7. It acts as a switchboard.
+- **The Agent**: The AI logic. It’s "embedded" inside the gateway but acts as its own entity.
+- **The Nodes**: Remote devices (like your iPhone) that connect to the Gateway to give it extra "powers" (like access to a camera).
 
 ---
 
-## 5. Key Concepts for Beginners
-*   **Gateway**: The central server that must be running for everything else to work.
-*   **Node**: Any device (like your iPhone or a remote Mac) that connects to the Gateway to provide extra features (like taking a photo).
-*   **Skill**: A specific capability you can give the AI (e.g., "Search the Web" or "Check my Email").
-*   **Session**: A specific conversation history. Each chat with the AI is isolated into its own session.
+## 3. The Core Map (`src/` Directory)
+
+### `src/acp/` (Agent Client Protocol)
+This folder contains the logic for a standardized protocol that allows different AI clients and servers to talk to each other using the same language.
+
+### `src/agents/` (The AI Brain)
+The most important folder for AI logic.
+- `pi-embedded-runner/`: The code that actually runs the AI model turns.
+- `tools/`: Definitions for every tool the AI can use (Browser, Terminal, etc.).
+- `sandbox/`: Security logic to run dangerous code (like Bash scripts) safely inside Docker.
+- `skills/`: Small packages of capabilities you can "give" to the AI.
+
+### `src/auto-reply/` (The Decision Engine)
+This folder decides *if* and *how* to reply to a message.
+- `reply/`: Logic for generating the final text/media to send back to the user.
+- `templating.ts`: Handles the "fill-in-the-blanks" logic for AI prompts.
+
+### `src/browser/` (The Web Browser)
+OpenClaw can actually open a real web browser (using Playwright) to search Google, read articles, or interact with websites for you.
+
+### `src/canvas-host/` (The Visual Workspace)
+Provides the "Canvas" feature—a side window where the AI can render charts, documents, or UI elements in real-time.
+
+### `src/channels/` (Communication Apps)
+Contains the shared logic for all messaging platforms.
+- `telegram/`, `whatsapp/`, `slack/`, `discord/`, `signal/`: Specific code to talk to each platform's servers.
+
+### `src/cli/` (The Command Line)
+The code for the `openclaw` command you type in your terminal. It handles onboarding, starting the server, and debugging.
+
+### `src/config/` (The Configuration)
+A massive system that manages your `openclaw.json` settings. It includes "Migrators" that automatically update your settings if the project version changes.
+
+### `src/gateway/` (The Switchboard)
+The heart of the networking. It manages WebSockets, incoming messages, and keeps track of which "Nodes" (devices) are currently connected.
+
+### `src/infra/` (System Plumbing)
+Lower-level code for networking (TLS, DNS), OS integration (Machine names, ENV variables), and system health (Heartbeats).
+
+### `src/media-understanding/` (AI Senses)
+The logic that allows the AI to "look" at an image or "listen" to a voice message and understand what is happening.
+
+### `src/plugins/` (The Extension System)
+The "Hook" system. It allows developers to add new features to OpenClaw without touching the core code.
 
 ---
 
----
+## 4. VIP Files (The "Very Important" Files)
 
-## 6. Deep Dive: How the AI "Thinks" (The Agent Loop)
-When the AI receives a message, it doesn't just guess an answer. it enters a cycle called the **Agent Loop**.
-
-1.  **Context Preparation**: The Agent looks at your history and "Bootstrap" files (information you've given it about your project or yourself).
-2.  **The Turn**: It sends everything to the LLM (like Claude or GPT-4).
-3.  **Tool Use**: If the AI realizes it needs to "Search the web" or "Read a file," it doesn't just hallucinate the answer. It stops and says: *"I need to use the `browser` tool."*
-4.  **Execution**: OpenClaw runs that tool locally (e.g., opens a real Chrome window) and sends the results back to the AI.
-5.  **Refinement**: The AI looks at the tool's output and either finishes its answer or decides it needs *another* tool.
-6.  **Streaming**: While this is happening, OpenClaw "streams" the progress to you so you can see what it's doing (e.g., "Searching Google...").
+1.  **`openclaw.mjs`**: The entry point for the entire application.
+2.  **`src/gateway/server.impl.ts`**: The main file that starts the Gateway server. If this file crashes, everything stops.
+3.  **`src/agents/pi-embedded-runner/run.ts`**: The file that orchestrates an AI "turn." It manages model selection, error handling, and tool execution.
+4.  **`src/config/zod-schema.ts`**: The "Law." It defines exactly what settings are allowed in your configuration file.
+5.  **`src/telegram/bot.ts`**: The bridge to Telegram. It’s a great example of how a channel works.
+6.  **`src/agents/pi-tools.ts`**: The "Tool Belt." It registers all the basic tools (like reading files) that the AI can use.
 
 ---
 
-## 7. Deep Dive: How Mobile Apps Connect (Nodes)
-OpenClaw can use your iPhone or Android as a **Node**. This means the AI can "see" through your phone's camera or "hear" through its microphone.
+## 5. The Nervous System (The Message Flow)
 
-1.  **Discovery**: The Gateway uses a technology called **Bonjour** (mDNS). It broadcasts a signal on your WiFi saying, *"Hey, I'm an OpenClaw Gateway!"*
-2.  **Pairing**: When you open the OpenClaw app on your phone, it looks for that signal. Once found, you "pair" them.
-3.  **Capabilities**: Your phone tells the Gateway: *"I have a camera and I can record audio."*
-4.  **Inversion of Control**: Now, when the AI (the "brain") decides it needs a photo, it sends a command to the Gateway, which forwards it to your phone. Your phone takes the photo and sends it back up to the AI.
-
----
-
-## 8. Code Tour: Explaining the "Magic" Files
-
-### The Switchboard (`src/gateway/server.impl.ts`)
-This file is the "Main" function for the Gateway. It:
-- Loads your `openclaw.json` configuration.
-- Starts the **WebSocket Server** (the pipe that talks to apps).
-- Sets up **Cron Jobs** (tasks that run on a schedule).
-- Manages **Plugins** (extra features).
-
-### The Engine (`src/agents/pi-embedded-runner/run.ts`)
-This is where the "Thinking" happens. It:
-- Handles **Failover**: If one AI model is down, it tries another.
-- Manages **Auth Profiles**: It chooses which API key to use.
-- Executes **Attempts**: It manages the actual conversation turns with the AI.
-
-### The Ear (`src/telegram/bot.ts`)
-This is how Telegram is integrated. It:
-- Uses the `grammy` library to talk to Telegram's servers.
-- **Sequentializes**: Ensures messages from the same person are handled in the right order.
-- **Deduplicates**: Makes sure the same message isn't processed twice.
-- Handles **Reactions**: Even when you add an emoji to a message, this file hears it and tells the AI.
+1.  **Inbound**: A message hits `src/telegram/bot-handlers.ts`.
+2.  **Context**: It's turned into a `MsgContext` (a standard object OpenClaw understands).
+3.  **Dispatch**: `src/auto-reply/dispatch.ts` looks at the message and finds the right **Session**.
+4.  **Agent Run**: `src/agents/pi-embedded-runner.ts` starts a loop.
+5.  **Event Stream**: As the AI thinks, it emits "Events" (e.g., `agent.lifecycle.start`). These are sent via **WebSockets** (`src/gateway/server-ws-runtime.ts`) to your Mac app so you see progress.
+6.  **Outbound**: The final text is delivered back through `src/telegram/bot/delivery.js`.
 
 ---
 
-*This document is your roadmap to the OpenClaw universe. Happy Hacking!* 🦞
+## 6. The Brain (The Agent Loop)
+
+The Agent doesn't just reply; it **loops**:
+1.  **Prompt**: "Search for the weather in Tokyo."
+2.  **Model**: Sends to Claude/GPT-4.
+3.  **Tool Call**: AI returns a JSON saying "I need to run the `browser` tool."
+4.  **Execution**: `src/agents/tools/browser-tool.ts` opens a browser and gets the result.
+5.  **Refinement**: Result is sent back to the AI.
+6.  **Final Answer**: AI says "The weather in Tokyo is 22°C."
+
+---
+
+## 7. The Shield (Security)
+
+When the AI runs code (like a terminal command), it can be dangerous.
+- **Sandboxing**: `src/agents/sandbox/docker.ts` can spin up a tiny "box" (a Docker container) where the AI's commands are trapped so they can't hurt your real computer.
+- **Exec Approval**: `src/gateway/exec-approval-manager.ts` can pause the AI and ask YOU for permission before it runs a command.
+
+---
+
+## 8. The Eyes & Ears (Media Pipeline)
+
+- **Vision**: When you send an image, `src/media-understanding/apply.ts` identifies it and prepares it for the AI model.
+- **Audio**: `src/media/audio.ts` handles voice-to-text (transcription) so the AI can "read" your voice messages.
+
+---
+
+## 9. The Expandable World (Plugins)
+
+The Plugin system in `src/plugins/` uses **Hooks**.
+Think of a "Hook" as a doorbell. When a message arrives, the "Message Received" doorbell rings. Any plugin that is "listening" to that doorbell can wake up and do something (like save the message to a database).
+
+---
+
+## 10. Native Apps (`apps/` Directory)
+
+- **`apps/macos/`**: A Swift app that lives in your Mac menu bar. It controls the Gateway.
+- **`apps/ios/` & `apps/android/`**: Mobile apps that act as "Nodes." They use **Bonjour** (`src/infra/bonjour.ts`) to find your computer on the WiFi and connect automatically.
+
+---
+
+## 11. The Language of OpenClaw (The Gateway Protocol)
+
+How does a Mac app written in Apple’s **Swift** talk to a Gateway written in **TypeScript**? They use a shared language called the **Gateway Protocol**.
+
+- **Protocol Definition**: Defined in `dist/protocol.schema.json`.
+- **Generator**: `scripts/protocol-gen.ts` and `scripts/protocol-gen-swift.ts` are the machines that translate the language between the two systems.
+- **WebSocket RPC**: They communicate using "Remote Procedure Calls." The Mac app sends a JSON packet like `{"method": "node.invoke", ...}` and the Gateway knows exactly what to do.
+
+---
+
+## 12. Remembering the Past (State and Sessions)
+
+OpenClaw doesn't just forget you when you close the app.
+- **Session Storage**: All chat history and settings are stored in `~/.openclaw/sessions/`.
+- **Compaction**: When a chat gets too long for the AI to remember, `src/agents/pi-embedded-runner/compact.ts` "squeezes" the history down into a summary so the AI stays fast and cheap.
+- **Presence**: `src/infra/system-presence.ts` keeps track of who is "Online" (which channels and nodes are active).
+
+---
+
+## 13. The Laboratory (Build System)
+
+- **pnpm**: The package manager that keeps all the monorepo pieces together.
+- **tsdown**: The compiler that transforms the TypeScript files in `src/` into the runnable JavaScript files in `dist/`.
+- **Vitest**: The testing engine. Every file named `*.test.ts` contains tiny experiments to make sure the code works correctly.
+
+---
+
+*This guide is your map to the lobster-verse. Use it wisely!* 🦞
