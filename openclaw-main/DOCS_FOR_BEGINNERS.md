@@ -229,7 +229,89 @@ The real magic happens when the project is over.
 
 ---
 
-## 15. Technical "How-To" for the Sentient Site
+## 15. The "Infinite Archaeology" Platform (The Skills System)
+
+The true power of OpenClaw is that it isn't just one AI—it is an **Infinite Team**. You can add new specialized "Sub-Archaeologists" just by dropping a Markdown file into the `skills/` folder.
+
+### 🎭 Sub-Archaeologists: Creating Your Specialized Team
+Imagine you are excavating a Roman site. You can create different experts:
+- **The Ceramologist (`skills/ceramics.md`)**: Trained in pottery typology.
+- **The Numismatist (`skills/coins.md`)**: Expert in Roman coinage.
+- **The Osteologist (`skills/bones.md`)**: Identifies animal vs. human remains.
+
+**How to add them:**
+Just create a file at `~/.openclaw/workspace/skills/numismatist.md`:
+```markdown
+---
+name: Roman Numismatist
+metadata: { emoji: "🪙", skillKey: "coin-expert" }
+---
+You are a specialist in Roman coins. When a user sends a photo of a coin,
+analyze the emperor's profile, the legend, and the mint mark.
+Use the `smithsonian_search` tool to find matches.
+```
+**OpenClaw instantly reads this file** and gives your agent these "superpowers."
+
+---
+
+## 16. Work-Elimination: The "2 AM Researcher" & More
+
+The goal of ADIN is to eliminate the "busy work" of archaeology so you can focus on the "discovery."
+
+### 🌙 The 2 AM Researcher (Autonomous Scholarly Synthesis)
+While the archaeological team is sleeping at the field camp, the Gateway is working.
+1.  **The Trigger:** A Cron job (`src/gateway/server-cron.ts`) starts at 2:00 AM.
+2.  **The Knowledge Crawl:** The AI uses the **Browser Tool** to crawl *JStor*, *Crossref*, and the *Smithsonian API*.
+3.  **The Synthesis:** It looks at every find logged in Aletheon today and cross-references it with newly published research.
+4.  **The Morning Report:** When you wake up, you have a WhatsApp message: *"Found a 95% match for that bronze buckle in a paper published last week. It suggests your site might be 50 years older than we thought."*
+
+### 👁️ The "Munsell Eye" (Instant Soil Classification)
+**The Problem:** Carrying heavy Munsell color charts and arguing about "brownish-gray" vs "grayish-brown" in the sun.
+**Elimination:** The AI uses Aletheon's vision engine to analyze a photo of the soil. It applies a "Color Correction" algorithm (using a known reference scale in the photo) and outputs the exact Munsell code (e.g., `10YR 3/2`).
+**Result:** Manual soil charting is eliminated.
+
+### 📄 The "Permit Butler" (Automated Regulatory Filings)
+**The Problem:** Filing government export permits and daily progress reports is a bureaucratic nightmare.
+**Elimination:** Since the AI has been "listening" to your voice logs all day and sees all your photos in the **Preservation Vault**, it can auto-fill government PDF forms.
+**Result:** 90% of paperwork is drafted by the AI before you even leave the trench.
+
+---
+
+## 17. Quick Start: Creating Your First Sub-Archaeologist
+
+Ready to expand your team? Follow these 3 steps to add a new specialist.
+
+### Step 1: Create the Folder
+Go to your OpenClaw workspace directory (usually `~/.openclaw/workspace/`) and create a `skills` folder if it doesn't exist.
+
+### Step 2: Create the Expert File
+Create a new file called `pottery_expert.md` and paste this:
+
+```markdown
+---
+name: Bronze Age Pottery Specialist
+metadata: { emoji: "🏺", skillKey: "pottery-pro" }
+---
+# Bronze Age Pottery Specialist
+
+You are an expert in Levantine Bronze Age ceramics.
+Your goal is to help the user identify rim types, base types, and fabric composition.
+
+**Guidelines:**
+1. If the user sends a photo of a shard, look for "Degraissants" (temper) like grit or straw.
+2. Cross-reference the shape with the "Amiran" typology database.
+3. Always provide a tentative date range (e.g., EB II-III).
+```
+
+### Step 3: Talk to the Expert
+Restart your OpenClaw Gateway. Now, send a photo of a pot shard on WhatsApp and say:
+> *"Ask the Pottery Specialist to date this."*
+
+**OpenClaw will automatically "spawn" the specialist sub-agent, give it the photo, and let it use its specialized knowledge to reply.**
+
+---
+
+## 18. Technical "How-To" for the Sentient Site
 
 If you want to start building this tomorrow, here are the exact files you would touch:
 
@@ -245,7 +327,7 @@ If you want to start building this tomorrow, here are the exact files you would 
 
 ---
 
-*This vision turns OpenClaw from a general assistant into a specialized scientific instrument. Welcome to the Sentient Site.* 🦞
+*This vision turns OpenClaw from a general assistant into a specialized scientific instrument. Welcome to the Infinite Archaeology Platform.* 🦞
 
 ---
 
