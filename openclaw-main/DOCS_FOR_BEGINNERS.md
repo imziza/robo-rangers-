@@ -171,4 +171,16 @@ OpenClaw doesn't just forget you when you close the app.
 
 ---
 
+## 14. The Future: Aletheon-Claw (Archaeological Intelligence)
+
+There is a vision to merge OpenClaw with **Aletheon** (the AI-powered archaeological analysis platform). This is not just adding one to the other; it’s a deep integration called **ADIN (Archaeological Distributed Intelligence Network)**.
+
+### How they merge:
+1.  **The Field Sensor**: OpenClaw's mobile apps (Nodes) become field tools. An archaeologist takes a photo of a relic in the dirt; it's instantly sent via the Gateway to the Aletheon Laboratory.
+2.  **The Lab Skill**: Aletheon's vision analysis engine (from `src/lib/ai.ts`) becomes a "Skill" that the OpenClaw Agent can use. If you ask the bot on WhatsApp "What is this?", it uses the Lab Skill to give you a scientific report.
+3.  **The Autonomous Librarian**: Using OpenClaw's "Cron" (scheduler) and "Browser" tools, the AI can spend all night searching the Smithsonian API for new discoveries that match your personal "Preservation Vault."
+4.  **Shared Memory**: Aletheon’s Supabase database and OpenClaw’s local session history merge into a single "Archaeological Knowledge Base."
+
+---
+
 *This guide is your map to the lobster-verse. Use it wisely!* 🦞
