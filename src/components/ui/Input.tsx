@@ -107,3 +107,57 @@ export const Textarea = forwardRef<HTMLTextAreaElement, TextareaProps>(
 );
 
 Textarea.displayName = 'Textarea';
+
+// Select variant
+export interface SelectProps extends InputHTMLAttributes<HTMLSelectElement> {
+    label?: string;
+    error?: string;
+    hint?: string;
+    variant?: 'dark' | 'light';
+    options: { value: string; label: string }[];
+}
+
+export const Select = forwardRef<HTMLSelectElement, SelectProps>(
+    (
+        {
+            label,
+            error,
+            hint,
+            variant = 'dark',
+            className = '',
+            id,
+            options,
+            ...props
+        },
+        ref
+    ) => {
+        const generatedId = useId();
+        const selectId = id || generatedId;
+
+        return (
+            <div className={`${styles.container} ${styles[variant]} ${className}`}>
+                {label && (
+                    <label htmlFor={selectId} className={styles.label}>
+                        {label}
+                    </label>
+                )}
+                <div className={`${styles.inputWrapper} ${error ? styles.hasError : ''}`}>
+                    <select
+                        ref={ref as any}
+                        id={selectId}
+                        className={styles.select}
+                        {...props as any}
+                    >
+                        {options.map(opt => (
+                            <option key={opt.value} value={opt.value}>{opt.label}</option>
+                        ))}
+                    </select>
+                </div>
+                {error && <span className={styles.error}>{error}</span>}
+                {hint && !error && <span className={styles.hint}>{hint}</span>}
+            </div>
+        );
+    }
+);
+
+Select.displayName = 'Select';

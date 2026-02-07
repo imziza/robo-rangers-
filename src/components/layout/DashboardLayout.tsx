@@ -25,6 +25,7 @@ import {
     LogOut as LucideLogOut
 } from 'lucide-react';
 import { NeuralSidebar } from './NeuralSidebar';
+import { CommandPalette } from '@/components/ui/CommandPalette';
 import styles from './DashboardLayout.module.css';
 
 interface DashboardLayoutProps {
@@ -51,19 +52,6 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
     // sidebarOpen state removed as NeuralSidebar is persistent
     const [unreadCount, setUnreadCount] = useState(0);
 
-    useEffect(() => {
-        loadUnreadCount();
-
-        const channel = supabase
-            .channel('layout_notifications')
-            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, () => {
-                setUnreadCount(prev => prev + 1);
-            })
-            .subscribe();
-
-        return () => { supabase.removeChannel(channel); };
-    }, []);
-
     const loadUnreadCount = async () => {
         const { data: { user } } = await supabase.auth.getUser();
         if (!user) return;
@@ -77,8 +65,22 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
         setUnreadCount(count || 0);
     };
 
+    useEffect(() => {
+        loadUnreadCount();
+
+        const channel = supabase
+            .channel('layout_notifications')
+            .on('postgres_changes', { event: 'INSERT', schema: 'public', table: 'notifications' }, () => {
+                setUnreadCount(prev => prev + 1);
+            })
+            .subscribe();
+
+        return () => { supabase.removeChannel(channel); };
+    }, []);
+
     return (
         <div className={styles.container}>
+            <CommandPalette />
             {/* Sidebar */}
             {/* Neural Ribbon Sidebar */}
             <NeuralSidebar />
@@ -94,15 +96,20 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
                 <header className={styles.topBar}>
                     {/* Menu toggle removed for Neural Sidebar */}
 
-                    <div className={styles.searchWrapper}>
+                    <div
+                        className={styles.searchWrapper}
+                        onClick={() => {
+                            const event = new KeyboardEvent('keydown', {
+                                key: 'k',
+                                ctrlKey: true,
+                                metaKey: true,
+                                bubbles: true
+                            });
+                            window.dispatchEvent(event);
+                        }}
+                    >
                         <Search size={18} strokeWidth={2} />
-                        <input
-                            type="text"
-                            placeholder="Search digital specimens..."
-                            value={searchQuery}
-                            onChange={(e) => setSearchQuery(e.target.value)}
-                            className={styles.searchInput}
-                        />
+                        <span className={styles.searchPlaceholder}>Search specimens... (Ctrl+K)</span>
                     </div>
 
                     <nav className={styles.topNav}>

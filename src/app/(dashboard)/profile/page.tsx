@@ -22,6 +22,7 @@ import { createSupabaseBrowserClient } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Input, Textarea } from '@/components/ui/Input';
 import { Card, ArtifactCard } from '@/components/ui/Card';
+import { useToast } from '@/components/ui/Toast';
 import styles from './page.module.css';
 
 interface ProfileData {
@@ -52,6 +53,7 @@ const BACKGROUND_PRESETS = [
 
 export default function ProfilePage() {
     const supabase = createSupabaseBrowserClient();
+    const { showToast } = useToast();
     const [profile, setProfile] = useState<ProfileData | null>(null);
     const [artifacts, setArtifacts] = useState<any[]>([]);
     const [isEditing, setIsEditing] = useState(false);
@@ -99,6 +101,11 @@ export default function ProfilePage() {
     };
 
     const handleSave = async () => {
+        if (!editData.full_name?.trim()) {
+            showToast('Identity record requires a name for archival integrity.', 'warning');
+            return;
+        }
+
         setIsSaving(true);
         try {
             const { error } = await supabase
@@ -112,15 +119,18 @@ export default function ProfilePage() {
                     website: editData.website,
                     avatar_url: editData.avatar_url,
                     cover_url: editData.cover_url,
+                    updated_at: new Date().toISOString()
                 })
                 .eq('id', profile?.id);
 
-            if (!error) {
-                setProfile(prev => ({ ...prev, ...editData } as ProfileData));
-                setIsEditing(false);
-            }
-        } catch (error) {
-            console.error('Error saving profile:', error);
+            if (error) throw error;
+
+            setProfile(prev => ({ ...prev, ...editData } as ProfileData));
+            setIsEditing(false);
+            showToast('Archival identity updated successfully.', 'success');
+        } catch (error: any) {
+            console.error('Archival update failure:', error);
+            showToast(`Protocol Error: ${error.message || 'Identity synchronization failed.'}`, 'error');
         } finally {
             setIsSaving(false);
         }
@@ -146,7 +156,7 @@ export default function ProfilePage() {
                         <img src={profile.cover_url} alt="Cover" />
                     ) : (
                         <img
-                            src="/C:/Users/ALETHINOS/.gemini/antigravity/brain/dcaf7313-7459-4ed4-a5c4-d86acf092ebf/dramatic_archaeology_bg_1769899806399.png"
+                            src="/cover-main.png"
                             alt="Archival Cover"
                             className={styles.defaultCover}
                         />

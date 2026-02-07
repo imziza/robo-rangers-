@@ -1,5 +1,6 @@
 import type { Metadata, Viewport } from "next";
 import { ThemeProvider } from "@/components/ThemeProvider";
+import { ToastProvider } from "@/components/ui/Toast";
 import { Atmosphere } from "@/components/ui/Atmosphere";
 import "./globals.css";
 
@@ -26,8 +27,10 @@ export default function RootLayout({
     <html lang="en" suppressHydrationWarning>
       <body style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
         <ThemeProvider>
-          <Atmosphere />
-          {children}
+          <ToastProvider>
+            <Atmosphere />
+            {children}
+          </ToastProvider>
         </ThemeProvider>
       </body>
     </html>

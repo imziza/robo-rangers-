@@ -3,6 +3,7 @@
 import { useState, useEffect, useRef } from 'react';
 import { Search, Compass, Shield, ArrowRight, X } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
+import { SkeletonCard } from '@/components/ui/Skeleton';
 import styles from './page.module.css';
 
 interface SimilarArtifact {
@@ -104,11 +105,7 @@ export default function DiscoveryPage() {
                 <div className={styles.resultsList} ref={resultsContainerRef}>
                     {isLoading ? (
                         Array(6).fill(0).map((_, i) => (
-                            <div key={i} className={styles.resultItem} style={{ height: '320px', opacity: 0.3 }}>
-                                <div className={styles.resultImage}>
-                                    <div className="animate-pulse w-full h-full bg-neutral-900" />
-                                </div>
-                            </div>
+                            <SkeletonCard key={i} height="320px" />
                         ))
                     ) : filteredResults.length > 0 ? (
                         filteredResults.map((artifact) => (

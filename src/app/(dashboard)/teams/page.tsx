@@ -1,12 +1,15 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence } from 'framer-motion';
 import { Users, Plus, Shield, Search, ExternalLink, Loader2, UserPlus, LogOut } from 'lucide-react';
 import { createSupabaseBrowserClient } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
 import { Input } from '@/components/ui/Input';
+import { SkeletonCard } from '@/components/ui/Skeleton';
+import { useToast } from '@/components/ui/Toast';
 import styles from './page.module.css';
 
 interface Team {
@@ -20,7 +23,9 @@ interface Team {
 }
 
 export default function TeamsPage() {
+    const router = useRouter();
     const supabase = createSupabaseBrowserClient();
+    const { showToast } = useToast();
     const [teams, setTeams] = useState<Team[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [showCreateModal, setShowCreateModal] = useState(false);
@@ -109,7 +114,7 @@ export default function TeamsPage() {
             loadTeams();
         } catch (error: any) {
             console.error('Error creating team:', error.message || error);
-            alert(`Initialization protocol failed: ${error.message || 'Check console for clearance.'}`);
+            showToast(`Initialization protocol failed: ${error.message || 'Check console for clearance.'}`, 'error');
         } finally {
             setIsCreating(false);
         }
@@ -152,10 +157,10 @@ export default function TeamsPage() {
                 });
 
             if (error) {
-                if (error.code === '23505') alert('Researcher already invited or member.');
+                if (error.code === '23505') showToast('Researcher already invited or member.', 'warning');
                 else throw error;
             } else {
-                alert('Invitation transmitted successfully.');
+                showToast('Invitation transmitted successfully.', 'success');
                 setShowInviteModal(null);
                 setInviteSearch('');
                 setInviteResults([]);
@@ -199,9 +204,10 @@ export default function TeamsPage() {
             </div>
 
             {isLoading ? (
-                <div className={styles.loaderWrapper}>
-                    <Loader2 className={styles.spinner} size={40} />
-                    <p>FETCHING COALITION DATA...</p>
+                <div className={styles.teamGrid}>
+                    {Array(3).fill(0).map((_, i) => (
+                        <SkeletonCard key={i} height="280px" />
+                    ))}
                 </div>
             ) : (
                 <div className={styles.teamGrid}>
@@ -253,6 +259,7 @@ export default function TeamsPage() {
                                             variant="outline"
                                             size="sm"
                                             rightIcon={<ExternalLink size={14} />}
+                                            onClick={() => router.push(`/archive?teamId=${team.id}`)}
                                         >
                                             Repository
                                         </Button>

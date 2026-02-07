@@ -12,11 +12,14 @@ import {
     CheckCircle,
     Clock,
     ArrowRight,
-    Search
+    Search,
+    UserPlus,
+    UserMinus
 } from 'lucide-react';
 import { createSupabaseBrowserClient } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
 import { Card } from '@/components/ui/Card';
+import { useToast } from '@/components/ui/Toast';
 import styles from './page.module.css';
 
 interface Notification {
@@ -33,6 +36,7 @@ interface Notification {
 export default function NotificationsPage() {
     const router = useRouter();
     const supabase = createSupabaseBrowserClient();
+    const { showToast } = useToast();
     const [notifications, setNotifications] = useState<Notification[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [filter, setFilter] = useState<'all' | 'unread'>('all');
@@ -128,6 +132,34 @@ export default function NotificationsPage() {
         }
     };
 
+    const handleInviteResponse = async (notif: Notification, status: 'accepted' | 'declined') => {
+        try {
+            const { team_id, invite_id } = notif.metadata;
+            const { data: { user } } = await supabase.auth.getUser();
+            if (!user) return;
+
+            // 1. Update invite status
+            await supabase
+                .from('team_invites')
+                .update({ status, responded_at: new Date().toISOString() })
+                .eq('id', invite_id);
+
+            // 2. If accepted, join group
+            if (status === 'accepted') {
+                await supabase
+                    .from('group_members')
+                    .insert({ group_id: team_id, user_id: user.id, role: 'member' });
+            }
+
+            // 3. Mark notification as read and delete it (or keep as history)
+            await markAsRead(notif.id);
+            showToast(status === 'accepted' ? 'Successfully joined the coalition.' : 'Invitation declined.', status === 'accepted' ? 'success' : 'info');
+        } catch (error: any) {
+            console.error('Invite response protocol failure:', error);
+            showToast(`Protocol Failure: ${error.message}`, 'error');
+        }
+    };
+
     const getIcon = (type: string) => {
         switch (type) {
             case 'team_invite': return <Users size={18} />;
@@ -200,6 +232,33 @@ export default function NotificationsPage() {
                                         <a href={notif.link} className={styles.notifLink}>
                                             Navigate to Source <ArrowRight size={14} />
                                         </a>
+                                    )}
+
+                                    {notif.type === 'team_invite' && !notif.is_read && (
+                                        <div className={styles.inviteActions}>
+                                            <Button
+                                                size="sm"
+                                                variant="primary"
+                                                leftIcon={<UserPlus size={14} />}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleInviteResponse(notif, 'accepted');
+                                                }}
+                                            >
+                                                Accept
+                                            </Button>
+                                            <Button
+                                                size="sm"
+                                                variant="ghost"
+                                                leftIcon={<UserMinus size={14} />}
+                                                onClick={(e) => {
+                                                    e.stopPropagation();
+                                                    handleInviteResponse(notif, 'declined');
+                                                }}
+                                            >
+                                                Decline
+                                            </Button>
+                                        </div>
                                     )}
                                 </div>
 
