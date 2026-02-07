@@ -231,38 +231,31 @@
     position: relative;
     display: flex;
     align-items: center;
+    cursor: pointer;
+    background-color: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    height: 40px;
+    padding: 0 var(--space-4);
+    transition: all 0.2s;
+}
+
+.searchWrapper:hover {
+    border-color: var(--gold-primary);
+    background-color: var(--bg-elevated);
 }
 
 .searchWrapper svg {
-    position: absolute;
-    left: var(--space-4);
+    color: var(--text-tertiary);
     width: 18px;
     height: 18px;
-    color: var(--text-tertiary);
 }
 
-.searchInput {
-    width: 100%;
-    height: 40px;
-    padding: 0 var(--space-4);
-    padding-left: calc(var(--space-4) + 26px);
-    background-color: var(--bg-card);
-    border: 1px solid var(--bg-elevated);
-    border-radius: var(--radius-md);
-    font-family: var(--font-body);
+.searchPlaceholder {
+    margin-left: 30px;
     font-size: var(--text-sm);
-    color: var(--text-primary);
-    transition: all var(--transition-fast);
-}
-
-.searchInput::placeholder {
     color: var(--text-tertiary);
-}
-
-.searchInput:focus {
-    outline: none;
-    border-color: var(--gold-primary);
-    background-color: var(--bg-input);
+    user-select: none;
 }
 
 /* Top Navigation */

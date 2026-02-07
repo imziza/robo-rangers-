@@ -170,6 +170,12 @@ export default function ReportPage() {
             animate="visible"
             variants={containerVariants}
         >
+            <div className={styles.reportBackground} />
+            <div className={`${styles.decorativeBracket} ${styles.topLeft}`} />
+            <div className={`${styles.decorativeBracket} ${styles.topRight}`} />
+            <div className={`${styles.decorativeBracket} ${styles.bottomLeft}`} />
+            <div className={`${styles.decorativeBracket} ${styles.bottomRight}`} />
+
             <header className={styles.header}>
                 <motion.div className={styles.headerTop} variants={fadeInUp}>
                     <div className={styles.headerLeft}>
@@ -227,12 +233,17 @@ export default function ReportPage() {
                                         src={artifact.image_urls[activeImageIndex]}
                                         alt={report.title}
                                         className={styles.artifactImage}
-                                        initial={{ opacity: 0, scale: 1.1 }}
-                                        animate={{ opacity: 1, scale: 1 }}
-                                        exit={{ opacity: 0, scale: 0.9 }}
+                                        initial={{ opacity: 0, scale: 1.1, filter: 'blur(10px)' }}
+                                        animate={{ opacity: 1, scale: 1, filter: 'blur(0px)' }}
+                                        exit={{ opacity: 0, scale: 0.9, filter: 'blur(5px)' }}
                                         transition={{ duration: 0.8 }}
                                     />
                                 </AnimatePresence>
+                                <motion.div
+                                    className={styles.scanLine}
+                                    animate={{ top: ['0%', '100%', '0%'] }}
+                                    transition={{ duration: 4, repeat: Infinity, ease: 'linear' }}
+                                />
                                 <div className={styles.imageOverlay} />
                                 {artifact.image_urls.length > 1 && (
                                     <div className={styles.imageCount}>
@@ -308,6 +319,21 @@ export default function ReportPage() {
                         <h2 className={styles.sectionHeading}>SCHOLARLY COMPARISONS</h2>
                         <div className={styles.sectionBody}>{report.comparativeAnalysis}</div>
                     </section>
+
+                    <motion.section
+                        className={styles.scholarlyInsights}
+                        variants={fadeInUp}
+                    >
+                        <div className={styles.insightHeader}>
+                            <FileText size={16} />
+                            <span>AUTOMATED PEER REVIEW FEEDBACK</span>
+                        </div>
+                        <p className={styles.insightText}>
+                            The morphological characteristics of this specimen align with late-period stylistic transitions.
+                            Spectral analysis suggests a composite material bonding technique previously undocumented in this sector.
+                            High probability of inter-regional trade influence detected in the base ornamentation.
+                        </p>
+                    </motion.section>
                 </main>
 
                 {/* Right Column: Sidebar Actions */}
