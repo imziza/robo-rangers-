@@ -1,26 +1,15 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import { motion, AnimatePresence, Variants } from 'framer-motion';
-import { createSupabaseBrowserClient } from '@/lib/supabase';
 import { ArtifactCard } from '@/components/ui/Card';
 import { Panel } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
+import { SkeletonCard } from '@/components/ui/Skeleton';
+import { useArtifacts, Artifact } from '@/hooks/useArtifacts';
 import { Shield, Sparkles, Database, History, Zap, Filter, ChevronRight, Plus } from 'lucide-react';
 import styles from './page.module.css';
-
-interface Artifact {
-    id: string;
-    title: string;
-    classification: string | null;
-    material: string | null;
-    era: string | null;
-    status: 'stable' | 'critical' | 'pending';
-    confidence_score: number | null;
-    created_at: string;
-    images?: { image_url: string; is_primary: boolean }[];
-}
 
 const MATERIALS = ['All', 'Gold', 'Stone', 'Lapis', 'Clay', 'Bronze', 'Terracotta'];
 
@@ -46,62 +35,31 @@ const itemVariants: Variants = {
 
 export default function VaultPage() {
     const router = useRouter();
-    const supabase = createSupabaseBrowserClient();
-    const [artifacts, setArtifacts] = useState<Artifact[]>([]);
+    const { artifacts, isLoading, refresh } = useArtifacts();
     const [selectedMaterial, setSelectedMaterial] = useState('All');
     const [selectedStatus, setSelectedStatus] = useState('All Specimens');
-    const [selectedArtifact, setSelectedArtifact] = useState<Artifact | null>(null);
-    const [isLoading, setIsLoading] = useState(true);
+    const [selectedArtifactId, setSelectedArtifactId] = useState<string | null>(null);
 
-    useEffect(() => {
-        loadArtifacts();
-    }, []);
+    const filteredArtifacts = useMemo(() => {
+        return artifacts.filter(artifact => {
+            if (selectedMaterial !== 'All' && artifact.material?.toLowerCase() !== selectedMaterial.toLowerCase()) return false;
+            if (selectedStatus === 'High Integrity' && (artifact.confidence_score || 0) < 0.8) return false;
+            if (selectedStatus === 'Critical Care' && artifact.status !== 'critical') return false;
+            if (selectedStatus === 'Recently Analyzed') {
+                const fiveDaysAgo = new Date();
+                fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
+                return new Date(artifact.created_at) > fiveDaysAgo;
+            }
+            return true;
+        });
+    }, [artifacts, selectedMaterial, selectedStatus]);
 
-    const loadArtifacts = async () => {
-        setIsLoading(true);
-        try {
-            const { data, error } = await supabase
-                .from('artifacts')
-                .select('*, artifact_images (image_url, is_primary)')
-                .order('created_at', { ascending: false });
-
-            if (error) throw error;
-
-            const dbArtifacts = (data || []).map(d => ({
-                ...d,
-                images: d.artifact_images || []
-            }));
-
-            // Sync with local storage for session parity
-            const localCatalog = JSON.parse(localStorage.getItem('vault_catalog') || '[]');
-            const localArtifacts = localCatalog
-                .filter((la: Artifact) => !dbArtifacts.find(da => da.id === la.id))
-                .map((la: Artifact & { image_url?: string }) => ({
-                    ...la,
-                    images: la.image_url ? [{ image_url: la.image_url, is_primary: true }] : []
-                }));
-
-            const combined = [...localArtifacts, ...dbArtifacts];
-            setArtifacts(combined);
-            if (combined.length > 0) setSelectedArtifact(combined[0]);
-        } catch (err) {
-            console.error(err);
-        } finally {
-            setIsLoading(false);
+    const selectedArtifact = useMemo(() => {
+        if (selectedArtifactId) {
+            return artifacts.find(a => a.id === selectedArtifactId) || artifacts[0] || null;
         }
-    };
-
-    const filteredArtifacts = artifacts.filter(artifact => {
-        if (selectedMaterial !== 'All' && artifact.material?.toLowerCase() !== selectedMaterial.toLowerCase()) return false;
-        if (selectedStatus === 'High Integrity' && (artifact.confidence_score || 0) < 0.8) return false;
-        if (selectedStatus === 'Critical Care' && artifact.status !== 'critical') return false;
-        if (selectedStatus === 'Recently Analyzed') {
-            const fiveDaysAgo = new Date();
-            fiveDaysAgo.setDate(fiveDaysAgo.getDate() - 5);
-            return new Date(artifact.created_at) > fiveDaysAgo;
-        }
-        return true;
-    });
+        return artifacts[0] || null;
+    }, [artifacts, selectedArtifactId]);
 
     return (
         <div className={styles.container}>
@@ -148,7 +106,6 @@ export default function VaultPage() {
                     fullWidth
                     leftIcon={<Plus size={18} />}
                     onClick={() => router.push('/analysis')}
-                    onMouseEnter={() => router.prefetch('/analysis')}
                 >
                     Initiate Analysis
                 </Button>
@@ -209,7 +166,6 @@ export default function VaultPage() {
                         variant="primary"
                         disabled={!selectedArtifact}
                         onClick={() => selectedArtifact && router.push(`/report/${selectedArtifact.id}`)}
-                        onMouseEnter={() => selectedArtifact && router.prefetch(`/report/${selectedArtifact.id}`)}
                         rightIcon={<ChevronRight size={16} />}
                         className={styles.viewDossierBtn}
                     >
@@ -226,7 +182,9 @@ export default function VaultPage() {
                     <AnimatePresence mode="popLayout">
                         {isLoading ? (
                             Array(8).fill(0).map((_, i) => (
-                                <motion.div key={`skeleton-${i}`} className={styles.skeletonCard} variants={itemVariants} />
+                                <motion.div key={`skeleton-${i}`} variants={itemVariants}>
+                                    <SkeletonCard />
+                                </motion.div>
                             ))
                         ) : filteredArtifacts.length > 0 ? (
                             filteredArtifacts.map(artifact => (
@@ -235,7 +193,7 @@ export default function VaultPage() {
                                     variants={itemVariants}
                                     layout
                                     className={`${styles.artifactItem} ${selectedArtifact?.id === artifact.id ? styles.selected : ''}`}
-                                    onClick={() => setSelectedArtifact(artifact)}
+                                    onClick={() => setSelectedArtifactId(artifact.id)}
                                     whileHover={{ y: -4 }}
                                 >
                                     <ArtifactCard

@@ -6,26 +6,17 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { createSupabaseBrowserClient } from '@/lib/supabase';
 import { Button } from '@/components/ui/Button';
-import { HISTORICAL_EVENTS, getEventsForYear, HistoricalEvent, CIVILIZATIONS } from '@/lib/historical_data';
+import { HISTORICAL_EVENTS, getEventsForYear, CIVILIZATIONS } from '@/lib/historical_data';
 import {
-    Layers,
     Grid3X3,
-    FileText,
     MapPin,
-    Radio,
     Search,
-    Navigation,
-    LocateFixed,
-    History,
-    Anchor,
-    Sword,
-    ScrollText,
-    Flame,
-    BookOpen,
-    Quote,
-    Cpu,
     Globe,
     Share2,
+    BookOpen,
+    Cpu,
+    Sword,
+    Anchor,
     Maximize2
 } from 'lucide-react';
 import { motion, AnimatePresence } from 'framer-motion';
@@ -44,8 +35,6 @@ interface AtlasEntity {
     verified?: boolean;
     description?: string;
     tag?: string;
-    color?: string;
-    region?: string;
     analysis?: string;
 }
 
@@ -58,20 +47,17 @@ const ERAS = [
 ];
 
 export default function AtlasPage() {
-    const router = useRouter();
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<maplibregl.Map | null>(null);
 
     const [artifacts, setArtifacts] = useState<AtlasEntity[]>([]);
-    const [viewYear, setViewYear] = useState(-1250); // Default to Trojan War era
+    const [viewYear, setViewYear] = useState(-1250);
     const [searchQuery, setSearchQuery] = useState('');
-    const [showSources, setShowSources] = useState(false);
-    const [gpsGranted, setGpsGranted] = useState(false);
     const [selectedEntity, setSelectedEntity] = useState<AtlasEntity | null>(null);
+    const [isTemporalShifting, setIsTemporalShifting] = useState(false);
 
     const [layersVisible, setLayersVisible] = useState({
         coordinateGrid: false,
-        fieldNotes: false,
         historicalEvents: true,
         discoveries: true,
         ruins: false
@@ -79,29 +65,16 @@ export default function AtlasPage() {
 
     const markersRef = useRef<{ [key: string]: maplibregl.Marker }>({});
 
-    useEffect(() => {
-        const mapInstance = map.current;
-        if (!mapInstance) return;
-
-        ['giza-overlay', 'rome-overlay'].forEach(id => {
-            if (mapInstance.getLayer(id)) {
-                mapInstance.setLayoutProperty(id, 'visibility', layersVisible.ruins ? 'visible' : 'none');
-            }
-        });
-    }, [layersVisible.ruins]);
-
     // Derive era from viewYear
     const currentEra = useMemo(() => {
         return ERAS.find(e => viewYear >= e.start && viewYear <= e.end) || { name: 'Chronos Overflow', color: '#fff' };
     }, [viewYear]);
 
-    // Derive active events for current year
+    // Active events and civilizations
     const activeEvents = useMemo(() => getEventsForYear(viewYear, 100), [viewYear]);
     const activeCivilizations = useMemo(() => {
         return CIVILIZATIONS.filter(c => viewYear >= c.startYear && viewYear <= c.endYear);
     }, [viewYear]);
-
-    const closestEvent = activeEvents[0];
 
     useEffect(() => {
         loadData();
@@ -110,7 +83,6 @@ export default function AtlasPage() {
     const loadData = async () => {
         const supabase = createSupabaseBrowserClient();
         const { data } = await supabase.from('artifacts').select('*');
-
         if (data) {
             const formatted: AtlasEntity[] = data.map(a => ({
                 id: a.id,
@@ -125,7 +97,13 @@ export default function AtlasPage() {
         }
     };
 
-    // Update markers and polygons based on temporal filters
+    // Temporal Shift Logic
+    useEffect(() => {
+        setIsTemporalShifting(true);
+        const timer = setTimeout(() => setIsTemporalShifting(false), 800);
+        return () => clearTimeout(timer);
+    }, [viewYear]);
+
     useEffect(() => {
         const mapInstance = map.current;
         if (!mapInstance) return;
@@ -134,7 +112,7 @@ export default function AtlasPage() {
         Object.values(markersRef.current).forEach(m => m.remove());
         markersRef.current = {};
 
-        // 1. Handle Civilization Polygons
+        // Update Civilization Polygons
         const civSourceId = 'civilizations-source';
         if (mapInstance.getSource(civSourceId)) {
             const civData: any = {
@@ -148,72 +126,41 @@ export default function AtlasPage() {
             (mapInstance.getSource(civSourceId) as maplibregl.GeoJSONSource).setData(civData);
         }
 
-        // 2. Handle map saturation/tint based on era
-        if (mapInstance.getLayer('background')) {
-            let saturation = -0.8;
-            let contrast = 0.2;
-
-            if (viewYear <= -2000) { // Bronze Age / Ancient
-                saturation = -0.9;
-                contrast = 0.4;
-            } else if (viewYear >= 1500) { // Renaissance / Modernish
-                saturation = -0.3;
-                contrast = 0.1;
-            }
-
-            mapInstance.setPaintProperty('background', 'raster-saturation', saturation);
-            mapInstance.setPaintProperty('background', 'raster-contrast', contrast);
-        }
-
-        // 3. Add Historical Events (Using New Beacon Design)
+        // Add Beacons for Events
         if (layersVisible.historicalEvents) {
             activeEvents.forEach(event => {
                 const el = document.createElement('div');
                 el.className = styles.markerBeacon;
-                el.innerHTML = `
-                    <div class="${styles.beaconCore}"></div>
-                    <div class="${styles.beaconPulse}"></div>
-                `;
-
+                el.innerHTML = `<div class="${styles.beaconCore}"></div><div class="${styles.beaconPulse}"></div>`;
                 el.addEventListener('click', () => {
                     setSelectedEntity(event as any);
-                    mapInstance.flyTo({ center: event.coordinates, zoom: 8 });
+                    mapInstance.flyTo({ center: event.coordinates as any, zoom: 8 });
                 });
-
                 markersRef.current[event.id] = new maplibregl.Marker({ element: el })
-                    .setLngLat(event.coordinates as maplibregl.LngLatLike)
+                    .setLngLat(event.coordinates as any)
                     .addTo(mapInstance);
             });
         }
 
-        // Add Discoveries filtered by time (rough era matching)
+        // Add Beacons for Discoveries
         if (layersVisible.discoveries) {
-            artifacts.filter(a => {
-                const aYear = a.year || -1000;
-                return Math.abs(aYear - viewYear) < 500;
-            }).forEach(a => {
+            artifacts.filter(a => Math.abs((a.year || -1000) - viewYear) < 500).forEach(a => {
                 const el = document.createElement('div');
-                el.className = styles.markerBeacon;
-                el.innerHTML = `
-                    <div class="${styles.beaconCore}" style="background-color: #fff; box-shadow: 0 0 10px #fff;"></div>
-                `;
-
+                el.className = styles.discoveryBeacon;
+                el.innerHTML = `<div class="${styles.beaconCore}"></div>`;
                 el.addEventListener('click', () => {
                     setSelectedEntity(a);
-                    mapInstance.flyTo({ center: a.coordinates, zoom: 12 });
+                    mapInstance.flyTo({ center: a.coordinates as any, zoom: 12 });
                 });
-
                 markersRef.current[a.id] = new maplibregl.Marker({ element: el })
-                    .setLngLat(a.coordinates as maplibregl.LngLatLike)
+                    .setLngLat(a.coordinates as any)
                     .addTo(mapInstance);
             });
         }
-
     }, [viewYear, artifacts, layersVisible, activeCivilizations, activeEvents]);
 
     useEffect(() => {
         if (!mapContainer.current || map.current) return;
-
         map.current = new maplibregl.Map({
             container: mapContainer.current,
             style: {
@@ -239,36 +186,6 @@ export default function AtlasPage() {
 
         map.current.on('load', () => {
             if (!map.current) return;
-            // Initialize overlays and layers (kept mostly same, just ensuring IDs match)
-            // Giza
-            map.current.addSource('giza-plan', {
-                type: 'image',
-                url: 'https://upload.wikimedia.org/wikipedia/commons/e/e5/Giza_pyramid_complex_%28map%29.svg',
-                coordinates: [[31.125, 29.985], [31.145, 29.985], [31.145, 29.970], [31.125, 29.970]]
-            });
-            map.current.addLayer({
-                id: 'giza-overlay',
-                source: 'giza-plan',
-                type: 'raster',
-                paint: { 'raster-opacity': 0.7, 'raster-fade-duration': 0 },
-                layout: { visibility: 'none' }
-            });
-
-            // Rome
-            map.current.addSource('rome-plan', {
-                type: 'image',
-                url: 'https://upload.wikimedia.org/wikipedia/commons/thumb/3/33/Plan_of_Roman_Forum_mostly_English.jpg/1024px-Plan_of_Roman_Forum_mostly_English.jpg',
-                coordinates: [[12.480, 41.895], [12.490, 41.895], [12.490, 41.890], [12.480, 41.890]]
-            });
-            map.current.addLayer({
-                id: 'rome-overlay',
-                source: 'rome-plan',
-                type: 'raster',
-                paint: { 'raster-opacity': 0.6 },
-                layout: { visibility: 'none' }
-            });
-
-            // Civilizations
             map.current.addSource('civilizations-source', {
                 type: 'geojson',
                 data: { type: 'FeatureCollection', features: [] }
@@ -283,18 +200,6 @@ export default function AtlasPage() {
                     'fill-outline-color': ['get', 'color']
                 }
             });
-
-            // Interactions
-            map.current.on('click', 'civilizations-layer', (e) => {
-                const feature = e.features?.[0];
-                if (feature) {
-                    const civ = CIVILIZATIONS.find(c => c.id === feature.properties.id);
-                    if (civ) setSelectedEntity(civ as any);
-                }
-            });
-
-            map.current.on('mouseenter', 'civilizations-layer', () => map.current!.getCanvas().style.cursor = 'pointer');
-            map.current.on('mouseleave', 'civilizations-layer', () => map.current!.getCanvas().style.cursor = '');
         });
 
         return () => map.current?.remove();
@@ -303,38 +208,12 @@ export default function AtlasPage() {
     const handleSearch = async (e: React.FormEvent) => {
         e.preventDefault();
         try {
-            // 1. Try local search first (Civilizations/Events)
-            const localMatch = [...activeCivilizations, ...activeEvents].find((e: any) =>
-                (e.name || e.title || '').toLowerCase().includes(searchQuery.toLowerCase())
-            );
-
-            if (localMatch) {
-                setSelectedEntity(localMatch as any);
-                map.current?.flyTo({ center: (localMatch as any).coordinates, zoom: 6 });
-                return;
-            }
-
-            // 2. Fallback to Nominatim for Universal Search
             const response = await fetch(`https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(searchQuery)}`);
             const data = await response.json();
-
             if (data && data.length > 0) {
                 const result = data[0];
                 const lat = parseFloat(result.lat);
                 const lon = parseFloat(result.lon);
-                // ... (Create entity and fly)
-                const searchEntity: AtlasEntity = {
-                    id: `search-${Date.now()}`,
-                    title: result.display_name.split(',')[0],
-                    name: result.display_name.split(',')[0],
-                    description: `Automated geolocated result for "${searchQuery}". Archival analysis pending.`,
-                    type: 'site',
-                    coordinates: [lon, lat],
-                    year: viewYear,
-                    verified: false,
-                    tag: 'Geolocated'
-                };
-                setSelectedEntity(searchEntity);
                 map.current?.flyTo({ center: [lon, lat], zoom: 10 });
             }
         } catch (error) {
@@ -342,39 +221,32 @@ export default function AtlasPage() {
         }
     };
 
-    const jumpToEra = (era: any) => {
-        const midPoint = Math.floor((era.start + era.end) / 2);
-        setViewYear(midPoint);
-    };
-
     return (
         <div className={styles.container}>
-            <div className={styles.vignette} />
-            <div className={styles.scanlines} />
+            <AnimatePresence>
+                {isTemporalShifting && (
+                    <motion.div
+                        className={styles.temporalOverlay}
+                        initial={{ opacity: 0 }}
+                        animate={{ opacity: 1 }}
+                        exit={{ opacity: 0 }}
+                    >
+                        <div className={styles.glitch} />
+                        <span className={styles.shiftLabel}>TEMPORAL SHIFT DETECTED</span>
+                    </motion.div>
+                )}
+            </AnimatePresence>
 
-            {/* --- GPS Status Widget --- */}
             <div className={styles.hudTopLeft}>
                 <div className={styles.statusWidget}>
                     <div className={styles.statusIndicator}>
                         <div className={styles.blinkingDot} />
-                        CONNECTION SECURE
-                    </div>
-                </div>
-                <div className={styles.statusWidget} style={{ opacity: 0.7 }}>
-                    <div className={styles.statusIndicator}>
-                        <Globe size={12} style={{ marginRight: 4 }} />
-                        {viewYear < 0 ? `${Math.abs(viewYear)} BC` : `${viewYear} AD`}
+                        CHRONO-LINK STABLE
                     </div>
                 </div>
             </div>
 
-            {/* --- Omnibox Search --- */}
-            <motion.div
-                className={styles.hudTopCenter}
-                initial={{ y: -50, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.6, ease: "easeOut" }}
-            >
+            <motion.div className={styles.hudTopCenter} initial={{ y: -50, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
                 <form onSubmit={handleSearch} className={styles.searchContainer}>
                     <input
                         type="text"
@@ -387,51 +259,33 @@ export default function AtlasPage() {
                 </form>
             </motion.div>
 
-            {/* --- Tool Stack --- */}
-            <motion.div
-                className={styles.hudTopRight}
-                initial={{ x: 50, opacity: 0 }}
-                animate={{ x: 0, opacity: 1 }}
-                transition={{ duration: 0.6, delay: 0.2 }}
-            >
+            <div className={styles.hudTopRight}>
                 <div className={styles.toolStack}>
                     <button
                         className={`${styles.toolButton} ${layersVisible.historicalEvents ? styles.active : ''}`}
                         onClick={() => setLayersVisible({ ...layersVisible, historicalEvents: !layersVisible.historicalEvents })}
-                        title="Toggle Historical Events"
                     >
                         <Sword size={16} />
                     </button>
                     <button
                         className={`${styles.toolButton} ${layersVisible.discoveries ? styles.active : ''}`}
                         onClick={() => setLayersVisible({ ...layersVisible, discoveries: !layersVisible.discoveries })}
-                        title="Toggle Findings"
                     >
                         <MapPin size={16} />
                     </button>
                     <button
-                        className={`${styles.toolButton} ${layersVisible.ruins ? styles.active : ''}`}
-                        onClick={() => setLayersVisible({ ...layersVisible, ruins: !layersVisible.ruins })}
-                        title="Toggle Ancient Site Plans"
-                    >
-                        <Anchor size={16} />
-                    </button>
-                    <button
                         className={`${styles.toolButton} ${layersVisible.coordinateGrid ? styles.active : ''}`}
                         onClick={() => setLayersVisible({ ...layersVisible, coordinateGrid: !layersVisible.coordinateGrid })}
-                        title="Toggle Grid"
                     >
                         <Grid3X3 size={16} />
                     </button>
                 </div>
-            </motion.div>
+            </div>
 
-            {/* --- Map Layer --- */}
             <main className={styles.mapWrapper}>
                 <div ref={mapContainer} className={styles.map} />
             </main>
 
-            {/* --- Codex Side Panel --- */}
             <AnimatePresence>
                 {selectedEntity && (
                     <motion.aside
@@ -439,93 +293,48 @@ export default function AtlasPage() {
                         initial={{ x: 400, opacity: 0 }}
                         animate={{ x: 0, opacity: 1 }}
                         exit={{ x: 400, opacity: 0 }}
-                        transition={{ type: "spring", stiffness: 300, damping: 30 }}
                     >
                         <div className={styles.codexHeader}>
                             <h2 className={styles.codexTitle}>{selectedEntity.name || selectedEntity.title}</h2>
-                            <span className={styles.codexSubtitle}>
-                                RECORD ID: {(selectedEntity.id).split('-')[0].toUpperCase()}
-                            </span>
+                            <span className={styles.codexSubtitle}>RECORD ID: {selectedEntity.id.split('-')[0].toUpperCase()}</span>
                         </div>
-
                         <div className={styles.codexContent}>
                             <div className={styles.dataBlock}>
                                 <span className={styles.dataLabel}>TEMPORAL LOCK</span>
                                 <span className={styles.dataValue}>
-                                    {(selectedEntity as any).startYear ?
-                                        `${Math.abs((selectedEntity as any).startYear)} - ${Math.abs((selectedEntity as any).endYear)}` :
-                                        `${Math.abs(selectedEntity.year || 0)}`
-                                    }
-                                    <span style={{ color: 'var(--gold-primary)', marginLeft: 8 }}>
-                                        {(selectedEntity.year || -1000) < 0 ? 'BCE' : 'CE'}
-                                    </span>
+                                    {selectedEntity.year ? Math.abs(selectedEntity.year) : `${Math.abs(selectedEntity.startYear || 0)} - ${Math.abs(selectedEntity.endYear || 0)}`}
+                                    <span style={{ color: 'var(--gold-primary)', marginLeft: 8 }}>{viewYear < 0 ? 'BCE' : 'CE'}</span>
                                 </span>
                             </div>
-
-                            <div className={styles.dataBlock}>
-                                <span className={styles.dataLabel}>ARCHIVAL DESCRIPTION</span>
-                                <p className={styles.dataValue}>
-                                    {selectedEntity.description || 'No descriptive data available for this archival entry.'}
-                                </p>
-                            </div>
-
                             <div className={styles.aiTerminal}>
                                 <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 8, color: 'var(--gold-primary)' }}>
                                     <Cpu size={14} />
-                                    <span style={{ fontWeight: 800, fontSize: 10, letterSpacing: '0.1em' }}>AI ANALYSIS RUNNING...</span>
+                                    <span style={{ fontWeight: 800, fontSize: 10, letterSpacing: '0.1em' }}>AI ANALYSIS...</span>
                                 </div>
-                                {selectedEntity.analysis ||
-                                    "Processing vector data... Pattern recognition suggests high probability of significant cultural exchange events in this sector. Recommend further excavation."}
+                                {selectedEntity.analysis || "Processing vector data... Pattern recognition suggests significant cultural exchange in this sector."}
                             </div>
                         </div>
-
                         <div className={styles.codexActions}>
-                            <Button variant="primary" fullWidth leftIcon={<BookOpen size={16} />} size="sm">
-                                OPEN FULL DOSSIER
-                            </Button>
-                            <Button variant="ghost" size="sm" leftIcon={<Share2 size={16} />}>
-                            </Button>
+                            <Button variant="primary" fullWidth leftIcon={<BookOpen size={16} />}>OPEN DOSSIER</Button>
                         </div>
                     </motion.aside>
                 )}
             </AnimatePresence>
 
-            {/* --- Chronometer --- */}
-            <motion.div
-                className={styles.chronometer}
-                initial={{ y: 100, opacity: 0 }}
-                animate={{ y: 0, opacity: 1 }}
-                transition={{ duration: 0.8, delay: 0.2 }}
-            >
+            <motion.div className={styles.chronometer} initial={{ y: 100, opacity: 0 }} animate={{ y: 0, opacity: 1 }}>
                 <div className={styles.chronoContainer}>
                     <div className={styles.chronoHeader}>
                         <div className={styles.currentEraDisplay}>
-                            <span className={styles.eraLabel}>CURRENT TEMPORAL ZONE</span>
+                            <span className={styles.eraLabel}>TEMPORAL ZONE</span>
                             <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{currentEra.name}</span>
                         </div>
                         <div className={styles.yearDisplay}>
-                            {Math.abs(viewYear)}
-                            <span className={styles.yearSuffix}>{viewYear < 0 ? 'BC' : 'AD'}</span>
+                            {Math.abs(viewYear)} <span className={styles.yearSuffix}>{viewYear < 0 ? 'BC' : 'AD'}</span>
                         </div>
                     </div>
-
                     <div className={styles.timelineTrack}>
                         <div className={styles.rail} />
-                        <div className={styles.tickMarks}>
-                            {[...Array(20)].map((_, i) => (
-                                <div
-                                    key={i}
-                                    className={`${styles.tick} ${i % 5 === 0 ? styles.major : ''}`}
-                                    style={{ left: `${(i / 19) * 100}%` }}
-                                />
-                            ))}
-                        </div>
-                        <motion.div
-                            className={styles.playhead}
-                            style={{ left: `${((viewYear - (-3300)) / (1600 - (-3300))) * 100}%` }}
-                        />
-
-                        {/* Interactive Slider Input */}
+                        <motion.div className={styles.playhead} style={{ left: `${((viewYear - (-3300)) / (1600 - (-3300))) * 100}%` }} />
                         <input
                             type="range"
                             min="-3300"
@@ -534,18 +343,6 @@ export default function AtlasPage() {
                             onChange={(e) => setViewYear(Number(e.target.value))}
                             className={styles.timelineInput}
                         />
-                    </div>
-
-                    <div className={styles.eraControls}>
-                        {ERAS.map(era => (
-                            <button
-                                key={era.name}
-                                className={`${styles.eraBtn} ${currentEra.name === era.name ? styles.active : ''}`}
-                                onClick={() => jumpToEra(era)}
-                            >
-                                {era.name}
-                            </button>
-                        ))}
                     </div>
                 </div>
             </motion.div>

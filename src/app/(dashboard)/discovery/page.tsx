@@ -1,9 +1,10 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Search, Compass, Shield, ArrowRight, X } from 'lucide-react';
+import { Search, Compass, Shield, ArrowRight, X, Save, Check } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { SkeletonCard } from '@/components/ui/Skeleton';
+import { useToast } from '@/components/ui/Toast';
 import styles from './page.module.css';
 
 interface SimilarArtifact {
@@ -22,16 +23,20 @@ interface SimilarArtifact {
 }
 
 export default function DiscoveryPage() {
+    const { showToast } = useToast();
     const [results, setResults] = useState<SimilarArtifact[]>([]);
     const [selectedArtifact, setSelectedArtifact] = useState<SimilarArtifact | null>(null);
     const [confidenceThreshold, setConfidenceThreshold] = useState(65);
     const [isLoading, setIsLoading] = useState(false);
     const [searchQuery, setSearchQuery] = useState('Egyptian funerary masks');
     const [showModal, setShowModal] = useState(false);
-    const resultsContainerRef = useRef<HTMLDivElement>(null);
+    const [isSaving, setIsSaving] = useState(false);
+    const [savedIds, setSavedIds] = useState<string[]>([]);
 
     useEffect(() => {
         handleSearch();
+        const catalog = JSON.parse(localStorage.getItem('vault_catalog') || '[]');
+        setSavedIds(catalog.map((c: any) => c.externalId).filter(Boolean));
     }, []);
 
     const handleSearch = async (e?: React.FormEvent) => {
@@ -58,9 +63,7 @@ export default function DiscoveryPage() {
             }));
 
             setResults(transformedResults);
-            if (transformedResults.length > 0) {
-                setSelectedArtifact(transformedResults[0]);
-            }
+            if (transformedResults.length > 0) setSelectedArtifact(transformedResults[0]);
         } catch (err) {
             console.error('Search error:', err);
         } finally {
@@ -68,20 +71,41 @@ export default function DiscoveryPage() {
         }
     };
 
-    const filteredResults = results.filter(
-        (r) => r.matchScore * 100 >= confidenceThreshold
-    );
+    const handleSaveToVault = async (artifact: SimilarArtifact) => {
+        setIsSaving(true);
+        try {
+            const catalog = JSON.parse(localStorage.getItem('vault_catalog') || '[]');
+            const newArtifact = {
+                id: `ext-${Date.now()}`,
+                externalId: artifact.id,
+                title: artifact.title,
+                classification: artifact.objectType,
+                material: artifact.material,
+                era: artifact.era,
+                status: 'stable',
+                confidence_score: artifact.matchScore,
+                image_url: artifact.imageUrl,
+                created_at: new Date().toISOString(),
+                source: artifact.source
+            };
+
+            localStorage.setItem('vault_catalog', JSON.stringify([newArtifact, ...catalog]));
+            setSavedIds(prev => [...prev, artifact.id]);
+            showToast('Artifact archived in local vault.', 'success');
+        } catch (err) {
+            showToast('Archival protocol failed.', 'error');
+        } finally {
+            setIsSaving(false);
+        }
+    };
+
+    const filteredResults = results.filter(r => r.matchScore * 100 >= confidenceThreshold);
 
     return (
         <div className={styles.container}>
-            {/* Header - Aletheon Laboratory Terminal */}
             <header className={styles.header}>
                 <h1 className={styles.title}>Deep Discovery</h1>
-                <p className={styles.subtitle}>
-                    AI-driven visual analysis and cross-referencing of global archaeological repositories.
-                    Perform high-resolution spectral matching against institutional archives.
-                </p>
-
+                <p className={styles.subtitle}>AI-driven cross-referencing of global archaeological repositories.</p>
                 <form className={styles.searchForm} onSubmit={handleSearch}>
                     <input
                         type="text"
@@ -90,23 +114,14 @@ export default function DiscoveryPage() {
                         placeholder="SEARCH ARCHES OF ANTIQUITY..."
                         className={styles.searchInput}
                     />
-                    <Button
-                        type="submit"
-                        variant="primary"
-                        isLoading={isLoading}
-                    >
-                        Execute Deep Scan
-                    </Button>
+                    <Button type="submit" variant="primary" isLoading={isLoading}>Execute Deep Scan</Button>
                 </form>
             </header>
 
             <div className={styles.content}>
-                {/* Result Repository Grid */}
-                <div className={styles.resultsList} ref={resultsContainerRef}>
+                <div className={styles.resultsList}>
                     {isLoading ? (
-                        Array(6).fill(0).map((_, i) => (
-                            <SkeletonCard key={i} height="320px" />
-                        ))
+                        Array(6).fill(0).map((_, i) => <SkeletonCard key={i} height="320px" />)
                     ) : filteredResults.length > 0 ? (
                         filteredResults.map((artifact) => (
                             <article
@@ -115,22 +130,9 @@ export default function DiscoveryPage() {
                                 onClick={() => setSelectedArtifact(artifact)}
                             >
                                 <div className={styles.resultImage}>
-                                    {artifact.imageUrl ? (
-                                        <img
-                                            src={artifact.imageUrl}
-                                            alt={artifact.title}
-                                            loading="lazy"
-                                        />
-                                    ) : (
-                                        <div className={styles.imagePlaceholder}>
-                                            <Shield size={60} strokeWidth={0.5} />
-                                        </div>
-                                    )}
-                                    <span className={styles.matchBadge}>
-                                        SCAN: {Math.round(artifact.matchScore * 100)}%
-                                    </span>
+                                    {artifact.imageUrl ? <img src={artifact.imageUrl} alt={artifact.title} /> : <div className={styles.imagePlaceholder}><Shield size={60} strokeWidth={0.5} /></div>}
+                                    <span className={styles.matchBadge}>SCAN: {Math.round(artifact.matchScore * 100)}%</span>
                                 </div>
-
                                 <div className={styles.resultContent}>
                                     <h3 className={styles.resultTitle}>{artifact.title}</h3>
                                     <div className={styles.resultTags}>
@@ -141,151 +143,43 @@ export default function DiscoveryPage() {
                             </article>
                         ))
                     ) : (
-                        <div className="col-span-full py-20 text-center opacity-30 font-mono text-sm tracking-widest">
-                            NO SPECTRUM MATCHES IN ACTIVE ARCHIVE.
-                        </div>
+                        <div className={styles.emptyResults}>NO SPECTRUM MATCHES IN ACTIVE ARCHIVE.</div>
                     )}
-
-                    {/* Threshold Control - Floating UI */}
                     <div className={styles.thresholdControl}>
-                        <label className={styles.thresholdLabel}>
-                            AI SCAN SENSITIVITY: {confidenceThreshold}%
-                        </label>
-                        <input
-                            type="range"
-                            min="50"
-                            max="98"
-                            value={confidenceThreshold}
-                            onChange={(e) => setConfidenceThreshold(Number(e.target.value))}
-                            className={styles.thresholdSlider}
-                        />
+                        <label className={styles.thresholdLabel}>AI SCAN SENSITIVITY: {confidenceThreshold}%</label>
+                        <input type="range" min="50" max="98" value={confidenceThreshold} onChange={(e) => setConfidenceThreshold(Number(e.target.value))} className={styles.thresholdSlider} />
                     </div>
                 </div>
 
-                {/* Technical Dossier Detail Panel */}
                 {selectedArtifact && (
                     <aside className={styles.detailPanel}>
                         <div className={styles.panelHeader}>
                             <span className={styles.panelLabel}>SPECIMEN ANALYSIS</span>
                             <h2 className={styles.panelTitle}>{selectedArtifact.title}</h2>
                         </div>
-
-                        <div className={styles.panelQuote}>
-                            {selectedArtifact.description}
-                        </div>
-
+                        <div className={styles.panelQuote}>{selectedArtifact.description}</div>
                         <div className={styles.panelMeta}>
                             <div className={styles.metaRow}>
-                                <div className={styles.metaItem}>
-                                    <span className={styles.metaLabel}>SPECIMEN ID</span>
-                                    <span className={styles.metaValue}>{selectedArtifact.id.slice(0, 12).toUpperCase()}</span>
-                                </div>
-                                <div className={styles.metaItem}>
-                                    <span className={styles.metaLabel}>PERIOD/ERA</span>
-                                    <span className={styles.metaValue}>{selectedArtifact.era}</span>
-                                </div>
-                            </div>
-                            <div className={styles.metaRow}>
-                                <div className={styles.metaItem}>
-                                    <span className={styles.metaLabel}>CHRONOLOGICAL SOURCE</span>
-                                    <span className={styles.metaValue}>{selectedArtifact.source}</span>
-                                </div>
-                                <div className={styles.metaItem}>
-                                    <span className={styles.metaLabel}>PROBABILITY</span>
-                                    <span className={styles.metaValue}>{(selectedArtifact.matchScore * 100).toFixed(2)}% MATCH</span>
-                                </div>
-                            </div>
-                            <div className={styles.metaRow}>
-                                <div className={styles.metaItem}>
-                                    <span className={styles.metaLabel}>CLASSIFICATION</span>
-                                    <span className={styles.metaValue}>{selectedArtifact.objectType}</span>
-                                </div>
-                                <div className={styles.metaItem}>
-                                    <span className={styles.metaLabel}>CULTURE</span>
-                                    <span className={styles.metaValue}>{selectedArtifact.culture}</span>
-                                </div>
+                                <div className={styles.metaItem}><span className={styles.metaLabel}>PERIOD</span><span className={styles.metaValue}>{selectedArtifact.era}</span></div>
+                                <div className={styles.metaItem}><span className={styles.metaLabel}>PROBABILITY</span><span className={styles.metaValue}>{Math.round(selectedArtifact.matchScore * 100)}%</span></div>
                             </div>
                         </div>
-
-                        {/* Analysis Tabs */}
-                        <div className={styles.panelTabs}>
-                            <button className={`${styles.tab} ${styles.active}`}>
-                                ▶ Spectral Data
-                            </button>
-                            <button className={styles.tab}>Material Deconstruction</button>
-                            <button className={styles.tab}>History Profile</button>
-                            <button className={styles.tab}>AI Core Notes</button>
+                        <div className={styles.panelActions}>
+                            <Button
+                                variant={savedIds.includes(selectedArtifact.id) ? "outline" : "primary"}
+                                fullWidth
+                                onClick={() => handleSaveToVault(selectedArtifact)}
+                                disabled={savedIds.includes(selectedArtifact.id)}
+                                leftIcon={savedIds.includes(selectedArtifact.id) ? <Check size={14} /> : <Save size={14} />}
+                                isLoading={isSaving}
+                            >
+                                {savedIds.includes(selectedArtifact.id) ? "Archived in Vault" : "Archiving to Vault"}
+                            </Button>
+                            <Button variant="ghost" fullWidth onClick={() => setShowModal(true)} rightIcon={<ArrowRight size={14} />}>Investigate Source</Button>
                         </div>
-
-                        <Button
-                            variant="primary"
-                            fullWidth
-                            onClick={() => setShowModal(true)}
-                            rightIcon={<ArrowRight size={14} />}
-                        >
-                            Investigate Global Archive Record
-                        </Button>
                     </aside>
                 )}
             </div>
-
-            {/* Deep Scan Modal */}
-            {showModal && selectedArtifact && (
-                <div style={{
-                    position: 'fixed', inset: 0, zIndex: 100, display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    background: 'rgba(0,0,0,0.9)', backdropFilter: 'blur(10px)'
-                }}>
-                    <div style={{
-                        maxWidth: '800px', width: '90%', background: '#0F0F0F', border: '1px solid var(--gold-primary)',
-                        padding: '40px', borderRadius: '4px', position: 'relative', boxShadow: '0 0 100px rgba(201, 162, 39, 0.2)'
-                    }}>
-                        <button
-                            onClick={() => setShowModal(false)}
-                            style={{ position: 'absolute', top: '20px', right: '20px', background: 'none', border: 'none', color: 'var(--text-tertiary)', cursor: 'pointer', display: 'flex', alignItems: 'center', gap: '8px', fontSize: '10px', fontWeight: 600 }}
-                        >
-                            CLOSE TERMINAL <X size={14} />
-                        </button>
-
-                        <div style={{ marginBottom: '30px' }}>
-                            <span style={{ fontFamily: 'monospace', color: 'var(--gold-primary)', fontSize: '10px', letterSpacing: '2px' }}>GLOBAL ARCHIVE INTERFACE // DEEP SCAN</span>
-                            <h2 style={{ fontFamily: 'var(--font-heading)', fontSize: '28px', color: 'var(--text-primary)', marginTop: '8px' }}>{selectedArtifact.title}</h2>
-                        </div>
-
-                        <div style={{ display: 'grid', gridTemplateColumns: '1fr 200px', gap: '30px' }}>
-                            <div style={{ fontSize: '14px', color: 'var(--text-secondary)', lineHeight: '1.8' }}>
-                                <p style={{ marginBottom: '20px' }}>{selectedArtifact.description}</p>
-                                <p>Aletheon AI has cross-referenced this specimen with known excavation sites. The structural integrity and iconographic markers suggest a significant link to your primary investigation area.</p>
-
-                                <div style={{ marginTop: '30px', padding: '20px', background: 'rgba(255,255,255,0.02)', border: '1px solid rgba(255,255,255,0.05)' }}>
-                                    <span style={{ fontSize: '11px', color: 'var(--gold-muted)', display: 'block', marginBottom: '8px' }}>SCHOLARLY LINK</span>
-                                    <a
-                                        href={selectedArtifact.url}
-                                        target="_blank"
-                                        rel="noopener noreferrer"
-                                        style={{ color: 'var(--gold-primary)', textDecoration: 'none', fontWeight: '500' }}
-                                    >
-                                        VERIFY ON INSTITUTIONAL DATABASE ↗
-                                    </a>
-                                </div>
-                            </div>
-                            <div>
-                                {selectedArtifact.imageUrl && (
-                                    <img
-                                        src={selectedArtifact.imageUrl}
-                                        style={{ width: '100%', border: '1px solid rgba(255,255,255,0.1)', background: '#000' }}
-                                        alt="Deep Scan"
-                                    />
-                                )}
-                                <div style={{ marginTop: '20px', fontFamily: 'monospace', fontSize: '10px', color: 'var(--text-tertiary)' }}>
-                                    <div>LAT: +29.9753</div>
-                                    <div>LNG: +31.1347</div>
-                                    <div style={{ color: 'var(--gold-primary)', marginTop: '4px' }}>STATUS: VERIFIED</div>
-                                </div>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
         </div>
     );
 }

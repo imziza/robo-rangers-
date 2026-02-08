@@ -1,17 +1,14 @@
 @import url('https://fonts.googleapis.com/css2?family=Cinzel:wght@400;500;600;700&family=Inter:wght@300;400;500;600;700&family=Outfit:wght@300;400;500;600;700&family=Crimson+Text:ital,wght@0,400;0,600;1,400&display=swap');
 
 /* --- MASTER DESIGN SYSTEM: "ALETHEON OS" --- */
-/* A Hyper-Realistic, Texture-First Desktop Interface System */
 
 :root {
-  /* --- CORE PALETTE (BACKWARDS COMPAT & NEW SYSTEM) --- */
   --gold-primary: #C9A227;
   --gold-secondary: #D4AF37;
   --gold-hover: #E5C158;
   --gold-muted: rgba(201, 162, 39, 0.2);
   --gold-glow: rgba(201, 162, 39, 0.4);
 
-  /* Semantic Status Colors */
   --status-stable: #22C55E;
   --status-stable-bg: rgba(34, 197, 94, 0.15);
   --status-critical: #EF4444;
@@ -21,279 +18,139 @@
   --status-verified: #3B82F6;
   --status-verified-bg: rgba(59, 130, 246, 0.15);
 
-  /* Typography */
   --font-heading: 'Cinzel', serif;
   --font-body: 'Inter', sans-serif;
   --font-ui: 'Outfit', sans-serif;
-  /* New UI Font */
   --font-academic: 'Crimson Text', serif;
 
-  /* Typography Scale */
-  --text-xs: 0.75rem;
-  --text-sm: 0.875rem;
-  --text-base: 1rem;
-  --text-lg: 1.125rem;
-  --text-xl: 1.25rem;
-  --text-2xl: 1.5rem;
-  --text-3xl: 2rem;
-  --text-4xl: 2.5rem;
-
-  /* Spacing System */
-  --space-1: 0.25rem;
-  --space-2: 0.5rem;
-  --space-3: 0.75rem;
-  --space-4: 1rem;
-  --space-6: 1.5rem;
-  --space-8: 2rem;
-  --space-12: 3rem;
-  --space-16: 4rem;
-
-  /* Radius System */
   --radius-sm: 4px;
   --radius-md: 8px;
   --radius-lg: 12px;
-  --radius-xl: 16px;
-  --radius-2xl: 24px;
-  --radius-full: 9999px;
 
-  /* --- TEXTURE SYSTEM --- */
-  /* Micro-grain noise for tactile feel */
   --texture-noise: url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='noiseFilter'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.65' numOctaves='3' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23noiseFilter)' opacity='0.05'/%3E%3C/svg%3E");
-
-  /* Glass Reflections */
   --texture-glass-shine: linear-gradient(135deg, rgba(255, 255, 255, 0.1) 0%, rgba(255, 255, 255, 0.01) 50%, rgba(255, 255, 255, 0) 100%);
-  --texture-glass-border: linear-gradient(180deg, rgba(255, 255, 255, 0.15) 0%, rgba(255, 255, 255, 0.05) 100%);
 
-  /* Brushed Metal (Graphite Mode) */
-  --texture-metal: repeating-linear-gradient(90deg, transparent 0, transparent 2px, rgba(0, 0, 0, 0.02) 2px, rgba(0, 0, 0, 0.02) 4px);
-
-  /* Motion Physics */
-  --spring-snap: cubic-bezier(0.175, 0.885, 0.32, 1.1);
-  /* Quick, snap back */
-  --spring-heavy: cubic-bezier(0.25, 0.46, 0.45, 0.94);
-  /* Heavy efficient */
-  --transition-fast: 150ms var(--spring-heavy);
-  --transition-base: 300ms var(--spring-heavy);
-  --transition-slow: 500ms var(--spring-heavy);
-
-  /* Z-Axis & Lighting */
-  --z-base: 0;
-  --z-docked: 100;
-  --z-floating: 500;
-  --z-modal: 1000;
-  --z-tooltip: 2000;
+  --transition-base: 300ms cubic-bezier(0.4, 0, 0.2, 1);
 }
 
-/* --- THEME ENGINE --- */
-
-/* 1. DARK MODE (DEFAULT - "Low-Glare Studio") */
-[data-theme='dark'],
-:root {
+/* 1. DARK MODE */
+[data-theme='dark'], :root {
   --bg-main: #0B0C10;
-  /* Deep Void */
   --bg-darker: #050507;
   --bg-card: rgba(22, 24, 28, 0.7);
-  --bg-card-hover: rgba(30, 34, 40, 0.8);
-  --bg-elevated: rgba(35, 39, 45, 0.9);
   --bg-input: rgba(10, 11, 13, 0.6);
-  --bg-overlay: rgba(0, 0, 0, 0.75);
-
   --text-primary: #EAEAEA;
   --text-secondary: #A0A4AB;
-  --text-tertiary: #5E636E;
-
   --border-color: rgba(255, 255, 255, 0.08);
-  /* Subtle highlight */
-  --shadow-base: 0 4px 20px rgba(0, 0, 0, 0.4);
-  --shadow-elevated: 0 8px 30px rgba(0, 0, 0, 0.6);
-
   --glass-bg: rgba(22, 24, 28, 0.6);
   --glass-blur: 16px;
-
-  --ambient-light: rgba(255, 255, 255, 0.02);
+  --accent-glow: 0 0 15px rgba(201, 162, 39, 0.3);
 }
 
-/* 2. LIGHT MODE ("Paper & Ink") */
+/* 2. LIGHT MODE */
 [data-theme='light'] {
   --bg-main: #F4F2F0;
-  /* Warm Paper */
   --bg-darker: #E8E6E1;
   --bg-card: rgba(255, 255, 255, 0.85);
-  --bg-card-hover: #FFFFFF;
-  --bg-elevated: #FFFFFF;
   --bg-input: #F0F0F0;
-  --bg-overlay: rgba(20, 20, 20, 0.2);
-
   --text-primary: #1C1C1E;
   --text-secondary: #5D5D62;
-  --text-tertiary: #8E8E93;
-
   --border-color: rgba(0, 0, 0, 0.08);
-  --shadow-base: 0 4px 12px rgba(0, 0, 0, 0.08);
-  --shadow-elevated: 0 8px 24px rgba(0, 0, 0, 0.12);
-
   --glass-bg: rgba(255, 255, 255, 0.75);
   --glass-blur: 12px;
-
-  --ambient-light: #FFFFFF;
+  --accent-glow: 0 4px 12px rgba(0, 0, 0, 0.1);
 }
 
-/* 3. AMBIENT MODE ("Bioluminescent") */
+/* 3. AMBIENT MODE - Signature Cinematic */
 [data-theme='ambient'] {
   --bg-main: #050B14;
-  /* Deep Ocean */
   --bg-darker: #020408;
-  --bg-card: rgba(13, 22, 35, 0.5);
-  --bg-card-hover: rgba(28, 41, 59, 0.6);
-  --bg-elevated: rgba(30, 41, 59, 0.7);
+  --bg-card: rgba(13, 22, 35, 0.4);
   --bg-input: rgba(5, 11, 20, 0.5);
-
   --text-primary: #E2E8F0;
   --text-secondary: #94A3B8;
-  --text-tertiary: #475569;
-
-  --border-color: rgba(201, 162, 39, 0.15);
-  /* Gold tint */
-  --shadow-base: 0 0 20px rgba(5, 10, 20, 0.8);
-  --shadow-elevated: 0 0 40px rgba(201, 162, 39, 0.1);
-
-  --glass-bg: rgba(13, 22, 35, 0.4);
-  --glass-blur: 24px;
+  --border-color: rgba(201, 162, 39, 0.2);
+  --glass-bg: rgba(13, 22, 35, 0.3);
+  --glass-blur: 32px; /* Increased blur for cinematic feel */
+  --accent-glow: 0 0 30px rgba(201, 162, 39, 0.2);
+  --bg-gradient: radial-gradient(circle at top right, rgba(201, 162, 39, 0.05), transparent),
+                 radial-gradient(circle at bottom left, rgba(59, 130, 246, 0.05), transparent);
 }
 
-/* 4. MIDNIGHT GLASS ("Deep Void") */
+/* 4. MIDNIGHT */
 [data-theme='midnight'] {
   --bg-main: #000000;
   --bg-darker: #030305;
   --bg-card: rgba(20, 20, 30, 0.3);
-  --bg-card-hover: rgba(40, 40, 60, 0.4);
-  --bg-elevated: rgba(30, 30, 50, 0.5);
-  --bg-input: rgba(10, 10, 15, 0.8);
-  --bg-overlay: rgba(0, 0, 0, 0.9);
-
   --text-primary: #FFFFFF;
   --text-secondary: #8899AC;
-  --text-tertiary: #4A5568;
-
   --border-color: rgba(100, 116, 139, 0.2);
-  --shadow-base: 0 10px 40px rgba(0, 0, 0, 0.9);
-  --shadow-elevated: 0 20px 60px rgba(0, 0, 0, 1);
-
   --glass-bg: rgba(10, 10, 20, 0.3);
   --glass-blur: 40px;
-  /* Heavy Blur */
+  --accent-glow: 0 0 40px rgba(0, 0, 0, 0.9);
 }
 
-/* 5. MATTE GRAPHITE ("Industrial") */
+/* 5. GRAPHITE */
 [data-theme='graphite'] {
   --bg-main: #202022;
   --bg-darker: #1A1A1C;
   --bg-card: #2A2A2D;
-  --bg-card-hover: #323236;
-  --bg-elevated: #38383D;
-  --bg-input: #151516;
-  --bg-overlay: rgba(0, 0, 0, 0.7);
-
   --text-primary: #F0F0F0;
   --text-secondary: #A0A0A0;
-  --text-tertiary: #606060;
-
   --border-color: rgba(0, 0, 0, 0.3);
-  --shadow-base: 4px 4px 0 rgba(0, 0, 0, 0.2);
-  --shadow-elevated: 8px 8px 0 rgba(0, 0, 0, 0.3);
-
   --glass-bg: #2A2A2D;
   --glass-blur: 0px;
-  /* Solid, no glass */
+  --accent-glow: 4px 4px 0 rgba(0, 0, 0, 0.2);
 }
 
-/* 6. AURORA ("Atmospheric") */
+/* 6. AURORA */
 [data-theme='aurora'] {
   --bg-main: #130f1a;
   --bg-darker: #0a0610;
   --bg-card: rgba(45, 30, 60, 0.3);
-  --bg-card-hover: rgba(60, 40, 80, 0.4);
-  --bg-elevated: rgba(70, 50, 90, 0.4);
-  --bg-input: rgba(10, 6, 16, 0.6);
-  --bg-overlay: rgba(10, 6, 16, 0.8);
-
   --text-primary: #EEDDFF;
   --text-secondary: #BB99CC;
-  --text-tertiary: #775599;
-
   --border-color: rgba(212, 175, 55, 0.2);
-  --shadow-base: 0 8px 32px rgba(80, 20, 100, 0.2);
-  --shadow-elevated: 0 16px 40px rgba(80, 20, 100, 0.3);
-
   --glass-bg: rgba(45, 30, 60, 0.2);
   --glass-blur: 32px;
+  --accent-glow: 0 8px 32px rgba(80, 20, 100, 0.2);
 }
 
-/* 7. FOCUS ("Minimal") */
+/* 7. FOCUS */
 [data-theme='focus'] {
   --bg-main: #18181A;
   --bg-darker: #121214;
   --bg-card: transparent;
-  /* Invisible cards */
-  --bg-card-hover: rgba(255, 255, 255, 0.03);
-  --bg-elevated: rgba(255, 255, 255, 0.05);
-  --bg-input: rgba(255, 255, 255, 0.02);
-  --bg-overlay: rgba(0, 0, 0, 0.9);
-
   --text-primary: #D4D4D8;
   --text-secondary: #71717A;
-  --text-tertiary: #3F3F46;
-
   --border-color: rgba(255, 255, 255, 0.05);
-  --shadow-base: none;
-  --shadow-elevated: none;
   --glass-bg: transparent;
   --glass-blur: 0px;
+  --accent-glow: none;
 }
 
-/* 8. HIGH CONTRAST PRO ("Utility") */
+/* 8. HIGH CONTRAST */
 [data-theme='high-contrast'] {
   --bg-main: #000000;
   --bg-darker: #000000;
   --bg-card: #000000;
-  --bg-card-hover: #111111;
-  --bg-elevated: #111111;
-  --bg-input: #000000;
-  --bg-overlay: rgba(0, 0, 0, 0.95);
-
   --text-primary: #FFFF00;
-  /* Yellow on Black */
   --text-secondary: #00FF00;
-  /* Green */
-  --text-tertiary: #00FFFF;
-  /* Cyan */
-
   --border-color: #FFFFFF;
-  --shadow-base: none;
-  --shadow-elevated: none;
   --glass-bg: #000000;
   --glass-blur: 0px;
-
-  --gold-primary: #FFFF00;
-}
-
-/* --- GLOBAL RESET & CHASSIS --- */
-html {
-  -webkit-font-smoothing: antialiased;
-  text-rendering: optimizeLegibility;
+  --accent-glow: none;
 }
 
 body {
   background-color: var(--bg-main);
+  background-image: var(--bg-gradient, none);
   color: var(--text-primary);
   font-family: var(--font-body);
-  transition: background-color 0.5s cubic-bezier(0.4, 0, 0.2, 1), color 0.3s ease;
+  transition: background-color 0.5s ease, color 0.3s ease;
   min-height: 100vh;
-  overflow-x: hidden;
-  position: relative;
 }
 
-/* Texture Overlay Layer */
 body::before {
   content: "";
   position: fixed;
@@ -302,51 +159,19 @@ body::before {
   z-index: 9999;
   pointer-events: none;
   mix-blend-mode: overlay;
+  opacity: 0.5;
 }
 
-/* --- PRIMITIVE UTILITIES --- */
-
-/* Glass Panel Primitive */
-.glass-panel {
+.glass {
   background: var(--glass-bg);
   backdrop-filter: blur(var(--glass-blur));
   -webkit-backdrop-filter: blur(var(--glass-blur));
   border: 1px solid var(--border-color);
-  box-shadow: var(--shadow-base);
-  position: relative;
-}
-
-/* Glass Panel Highlight Effect */
-.glass-panel::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  border-radius: inherit;
-  background: var(--texture-glass-shine);
-  pointer-events: none;
-  opacity: 0.5;
-}
-
-/* Interactive Elements */
-a,
-button {
-  cursor: pointer;
-  user-select: none;
+  box-shadow: var(--accent-glow);
 }
 
 * {
   box-sizing: border-box;
   margin: 0;
   padding: 0;
-}
-
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-  font-family: var(--font-heading);
-  font-weight: 600;
-  letter-spacing: -0.02em;
 }

@@ -14,6 +14,13 @@ interface PanelProps extends HTMLMotionProps<'div'> {
 
 export const Panel = forwardRef<HTMLDivElement, PanelProps>(
     ({ children, variant = 'glass', padding = 'md', elevation = 0, className = '', ...props }, ref) => {
+        const {
+            initial, animate, exit, transition, variants,
+            whileHover, whileTap, whileFocus, whileDrag, whileInView,
+            onAnimationStart, onAnimationComplete, onUpdate,
+            ...safeProps
+        } = props as any;
+
         return (
             <motion.div
                 ref={ref}
@@ -24,10 +31,14 @@ export const Panel = forwardRef<HTMLDivElement, PanelProps>(
                     ${styles[`elevation-${elevation}`]} 
                     ${className}
                 `}
-                initial={{ opacity: 0, y: 10 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.4, ease: "easeOut" }}
-                {...props}
+                initial={initial || { opacity: 0, y: 10 }}
+                animate={animate || { opacity: 1, y: 0 }}
+                transition={transition || { duration: 0.4, ease: "easeOut" }}
+                exit={exit}
+                variants={variants}
+                whileHover={whileHover}
+                whileTap={whileTap}
+                {...safeProps}
             >
                 {/* Texture Overlay for Metal/Noise */}
                 {variant !== 'outline' && (
