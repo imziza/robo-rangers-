@@ -60,6 +60,12 @@ export function ToastProvider({ children }: { children: ReactNode }) {
                             <button onClick={() => removeToast(toast.id)} className={styles.closeBtn}>
                                 <X size={14} />
                             </button>
+                            <motion.div
+                                className={styles.progress}
+                                initial={{ width: '100%' }}
+                                animate={{ width: 0 }}
+                                transition={{ duration: (toast.duration || 5000) / 1000, ease: 'linear' }}
+                            />
                         </motion.div>
                     ))}
                 </AnimatePresence>

@@ -1,53 +1,46 @@
 .skeleton {
-    background: linear-gradient(90deg,
-            rgba(255, 255, 255, 0.03) 25%,
-            rgba(255, 255, 255, 0.08) 50%,
-            rgba(255, 255, 255, 0.03) 75%);
-    background-size: 200% 100%;
-    animation: shimmer 1.5s infinite linear;
-    border-radius: var(--radius-md);
+    position: relative;
+    overflow: hidden;
+    background: rgba(255, 255, 255, 0.05);
+}
+
+.shimmer {
+    position: absolute;
+    inset: 0;
+    transform: translateX(-100%);
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(255, 255, 255, 0.05),
+        transparent
+    );
+    animation: shimmer 1.5s infinite;
 }
 
 @keyframes shimmer {
-    0% {
-        background-position: 200% 0;
-    }
-
     100% {
-        background-position: -200% 0;
+        transform: translateX(100%);
     }
 }
 
-.skeletonText {
-    height: 1em;
-    width: 100%;
+.skeletonCardWrapper {
+    background: var(--bg-card);
+    border: 1px solid var(--border-color);
+    border-radius: var(--radius-md);
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
 }
 
-.skeletonTitle {
-    height: 2em;
-    width: 60%;
-    margin-bottom: var(--space-4);
+[data-theme='light'] .skeleton {
+    background: rgba(0, 0, 0, 0.05);
 }
 
-.skeletonCircle {
-    border-radius: 50%;
-    width: 40px;
-    height: 40px;
-}
-
-.skeletonCard {
-    aspect-ratio: 3/4;
-    border-radius: var(--radius-xl);
-}
-
-.skeletonHeader {
-    height: 120px;
-    border-radius: var(--radius-2xl);
-    width: 100%;
-}
-
-.skeletonSidebar {
-    width: 280px;
-    height: 600px;
-    border-radius: var(--radius-2xl);
+[data-theme='light'] .shimmer {
+    background: linear-gradient(
+        90deg,
+        transparent,
+        rgba(0, 0, 0, 0.03),
+        transparent
+    );
 }

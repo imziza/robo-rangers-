@@ -70,7 +70,6 @@ export async function searchSimilarArtifacts(params: SearchParams): Promise<Sear
     }
 
     try {
-        // Build search query from parameters
         const queryParts: string[] = [];
 
         if (params.keywords?.length) {
@@ -104,7 +103,7 @@ export async function searchSimilarArtifacts(params: SearchParams): Promise<Sear
         }
 
         const data = await response.json();
-        const rows = data.response?.rows || [];
+        const rows: SmithsonianArtifact[] = data.response?.rows || [];
 
         return rows.map((item: SmithsonianArtifact, index: number) =>
             transformToSearchResult(item, index, rows.length)
@@ -125,7 +124,6 @@ function transformToSearchResult(
     const freetext = content?.freetext;
     const indexed = content?.indexedStructured;
 
-    // Get media URLs
     let imageUrl: string | null = null;
     let thumbnailUrl: string | null = null;
 
@@ -151,12 +149,10 @@ function transformToSearchResult(
 }
 
 function calculateMatchScore(index: number, total: number): number {
-    // Higher rank = higher score (1.0 to 0.5 range)
     return Math.round((1 - (index / total) * 0.5) * 100) / 100;
 }
 
 function getMockResults(): SearchResult[] {
-    // Mock data for development/fallback with real Smithsonian URLs
     return [
         {
             id: 'edanmdm-nmnhanthropology_8462058',
@@ -170,128 +166,10 @@ function getMockResults(): SearchResult[] {
             objectType: 'Funerary Mask',
             recordUrl: 'https://collections.si.edu/search/detail/edanmdm:nmnhanthropology_8462058',
             matchScore: 0.98
-        },
-        {
-            id: 'edanmdm-chndm_1917-4-154',
-            title: 'Mycenaean Terracotta Kylix',
-            imageUrl: 'https://ids.si.edu/ids/deliveryService?id=CHNDM-1917-4-154-000001',
-            thumbnailUrl: 'https://ids.si.edu/ids/deliveryService?id=CHNDM-1917-4-154-000001',
-            era: '1400 BCE',
-            region: 'Greece',
-            culture: 'Mycenaean',
-            material: 'Terracotta',
-            objectType: 'Drinking Vessel',
-            recordUrl: 'https://collections.si.edu/search/detail/edanmdm:chndm_1917-4-154',
-            matchScore: 0.95
-        },
-        {
-            id: 'edanmdm-nmnhanthropology_8014524',
-            title: 'Sumerian Ledger Tablet',
-            imageUrl: 'https://ids.si.edu/ids/deliveryService?id=nmnhanthropology_8014524',
-            thumbnailUrl: 'https://ids.si.edu/ids/deliveryService?id=nmnhanthropology_8014524',
-            era: '2100 BCE',
-            region: 'Mesopotamia',
-            culture: 'Sumerian',
-            material: 'Clay',
-            objectType: 'Cuneiform Tablet',
-            recordUrl: 'https://collections.si.edu/search/detail/edanmdm:nmnhanthropology_8014524',
-            matchScore: 0.92
-        },
-        {
-            id: 'edanmdm-fsg_F1939.38',
-            title: 'Shang Dynasty Ritual Bronze',
-            imageUrl: 'https://ids.si.edu/ids/deliveryService?id=FS-F1939.38-000001',
-            thumbnailUrl: 'https://ids.si.edu/ids/deliveryService?id=FS-F1939.38-000001',
-            era: '1200 BCE',
-            region: 'China',
-            culture: 'Shang Dynasty',
-            material: 'Bronze',
-            objectType: 'Ritual Vessel',
-            recordUrl: 'https://collections.si.edu/search/detail/edanmdm:fsg_F1939.38',
-            matchScore: 0.89
-        },
-        {
-            id: 'edanmdm-nmafa_89-13-1',
-            title: 'Benin Bronze Head',
-            imageUrl: 'https://ids.si.edu/ids/deliveryService?id=NMAFA-89-13-1-000001',
-            thumbnailUrl: 'https://ids.si.edu/ids/deliveryService?id=NMAFA-89-13-1-000001',
-            era: '1550 CE',
-            region: 'Nigeria',
-            culture: 'Benin Kingdom',
-            material: 'Brass, Iron',
-            objectType: 'Commemorative Head',
-            recordUrl: 'https://collections.si.edu/search/detail/edanmdm:nmafa_89-13-1',
-            matchScore: 0.87
-        },
-        {
-            id: 'edanmdm-nmnhanthropology_8398292',
-            title: 'Mayan Jade Pectoral',
-            imageUrl: 'https://ids.si.edu/ids/deliveryService?id=nmnhanthropology_8398292',
-            thumbnailUrl: 'https://ids.si.edu/ids/deliveryService?id=nmnhanthropology_8398292',
-            era: '600 CE',
-            region: 'Mexico',
-            culture: 'Maya',
-            material: 'Jadeite',
-            objectType: 'Jewelry',
-            recordUrl: 'https://collections.si.edu/search/detail/edanmdm:nmnhanthropology_8398292',
-            matchScore: 0.85
-        },
-        {
-            id: 'edanmdm-nmai_297753',
-            title: 'Inca Quipu (Recording Device)',
-            imageUrl: 'https://ids.si.edu/ids/deliveryService?id=NMAI-297753_000001',
-            thumbnailUrl: 'https://ids.si.edu/ids/deliveryService?id=NMAI-297753_000001',
-            era: '1450 CE',
-            region: 'Peru',
-            culture: 'Inca',
-            material: 'Cotton, Camelid Fiber',
-            objectType: 'Record Keeping',
-            recordUrl: 'https://collections.si.edu/search/detail/edanmdm:nmai_297753',
-            matchScore: 0.82
-        },
-        {
-            id: 'edanmdm-asia_F1909.117',
-            title: 'Persian Silver Rhyton',
-            imageUrl: 'https://ids.si.edu/ids/deliveryService?id=FS-F1909.117-000001',
-            thumbnailUrl: 'https://ids.si.edu/ids/deliveryService?id=FS-F1909.117-000001',
-            era: '450 BCE',
-            region: 'Persia',
-            culture: 'Achaemenid',
-            material: 'Silver',
-            objectType: 'Drinking Vessel',
-            recordUrl: 'https://collections.si.edu/search/detail/edanmdm:asia_F1909.117',
-            matchScore: 0.80
-        },
-        {
-            id: 'edanmdm-fsg_F1954.127',
-            title: 'Gandharan Buddha',
-            imageUrl: 'https://ids.si.edu/ids/deliveryService?id=FS-F1954.127-000001',
-            thumbnailUrl: 'https://ids.si.edu/ids/deliveryService?id=FS-F1954.127-000001',
-            era: '200 CE',
-            region: 'Pakistan',
-            culture: 'Gandhara',
-            material: 'Grey Schist',
-            objectType: 'Sculpture',
-            recordUrl: 'https://collections.si.edu/search/detail/edanmdm:fsg_F1954.127',
-            matchScore: 0.78
-        },
-        {
-            id: 'edanmdm-nmnhanthropology_8014524_2',
-            title: 'Babylonian Ishtar Gate Brick',
-            imageUrl: 'https://ids.si.edu/ids/deliveryService?id=nmnhanthropology_8014524',
-            thumbnailUrl: 'https://ids.si.edu/ids/deliveryService?id=nmnhanthropology_8014524',
-            era: '575 BCE',
-            region: 'Babylon',
-            culture: 'Neo-Babylonian',
-            material: 'Glazed Brick',
-            objectType: 'Architectural Fragment',
-            recordUrl: 'https://collections.si.edu/search/detail/edanmdm:nmnhanthropology_8014524',
-            matchScore: 0.75
         }
     ];
 }
 
-// Build search vector from AI analysis for finding similar artifacts
 export function buildSearchParamsFromReport(report: {
     material?: string;
     era?: string;
@@ -300,12 +178,9 @@ export function buildSearchParamsFromReport(report: {
     geographicSignificance?: string;
 }): SearchParams {
     const keywords: string[] = [];
-
-    // Extract meaningful keywords from the report
     if (report.classification) {
         keywords.push(...extractKeywords(report.classification));
     }
-
     return {
         material: report.material,
         era: extractEra(report.era),
@@ -316,7 +191,6 @@ export function buildSearchParamsFromReport(report: {
 }
 
 function extractKeywords(text: string): string[] {
-    // Extract significant archaeological terms
     const terms = text.toLowerCase().split(/\s+/);
     const significantTerms = terms.filter(term =>
         term.length > 4 &&
@@ -327,34 +201,25 @@ function extractKeywords(text: string): string[] {
 
 function extractEra(era?: string): string | undefined {
     if (!era) return undefined;
-    // Normalize era formats
     const match = era.match(/(\d+)\s*(BCE|BC|CE|AD)/i);
-    if (match) {
-        return `${match[1]} ${match[2].toUpperCase()}`;
-    }
+    if (match) return `${match[1]} ${match[2].toUpperCase()}`;
     return era;
 }
 
 function extractRegion(text?: string): string | undefined {
     if (!text) return undefined;
-    // Common archaeological regions
     const regions = ['Egypt', 'Greece', 'Rome', 'Mesopotamia', 'Persia', 'China', 'Maya', 'Aztec', 'Inca'];
     for (const region of regions) {
-        if (text.toLowerCase().includes(region.toLowerCase())) {
-            return region;
-        }
+        if (text.toLowerCase().includes(region.toLowerCase())) return region;
     }
     return undefined;
 }
 
 function extractCulture(text?: string): string | undefined {
     if (!text) return undefined;
-    // Common cultures
     const cultures = ['Egyptian', 'Greek', 'Roman', 'Sumerian', 'Babylonian', 'Persian', 'Celtic', 'Viking', 'Mayan'];
     for (const culture of cultures) {
-        if (text.toLowerCase().includes(culture.toLowerCase())) {
-            return culture;
-        }
+        if (text.toLowerCase().includes(culture.toLowerCase())) return culture;
     }
     return undefined;
 }

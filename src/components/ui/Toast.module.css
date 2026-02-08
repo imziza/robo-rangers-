@@ -13,8 +13,8 @@
     display: flex;
     align-items: center;
     gap: var(--space-4);
-    padding: var(--space-3) var(--space-4);
-    min-width: 300px;
+    padding: var(--space-4);
+    min-width: 320px;
     max-width: 450px;
     background: var(--bg-card);
     border: 1px solid var(--border-color);
@@ -22,6 +22,8 @@
     box-shadow: 0 10px 25px rgba(0, 0, 0, 0.5);
     pointer-events: auto;
     backdrop-filter: blur(12px);
+    overflow: hidden;
+    position: relative;
 }
 
 .icon {
@@ -48,15 +50,27 @@
     color: var(--text-primary);
 }
 
+.progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    height: 3px;
+    background: var(--gold-primary);
+    opacity: 0.5;
+}
+
 /* Types */
 .success .icon { color: var(--status-stable); }
 .success { border-left: 4px solid var(--status-stable); }
+.success .progress { background: var(--status-stable); }
 
 .error .icon { color: var(--status-critical); }
 .error { border-left: 4px solid var(--status-critical); }
+.error .progress { background: var(--status-critical); }
 
 .info .icon { color: var(--gold-primary); }
 .info { border-left: 4px solid var(--gold-primary); }
 
 .warning .icon { color: var(--status-pending); }
 .warning { border-left: 4px solid var(--status-pending); }
+.warning .progress { background: var(--status-pending); }

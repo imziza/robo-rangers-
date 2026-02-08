@@ -1,11 +1,11 @@
 'use client';
 
 import { ReactNode } from 'react';
-import { motion } from 'framer-motion';
+import { motion, HTMLMotionProps } from 'framer-motion';
 import { Image as ImageIcon } from 'lucide-react';
 import styles from './Card.module.css';
 
-export interface CardProps {
+export interface CardProps extends HTMLMotionProps<'div'> {
     children: ReactNode;
     variant?: 'default' | 'elevated' | 'bordered' | 'artifact';
     padding?: 'none' | 'sm' | 'md' | 'lg';
@@ -20,7 +20,8 @@ export function Card({
     padding = 'md',
     className = '',
     onClick,
-    hoverable = false
+    hoverable = false,
+    ...props
 }: CardProps) {
     const cardClasses = [
         styles.card,
@@ -33,14 +34,26 @@ export function Card({
         .filter(Boolean)
         .join(' ');
 
+    const {
+        initial, animate, exit, transition, variants,
+        whileHover, whileTap, whileFocus, whileDrag, whileInView,
+        onAnimationStart, onAnimationComplete, onUpdate,
+        ...safeProps
+    } = props as any;
+
     return (
         <motion.div
             className={cardClasses}
             onClick={onClick}
             role={onClick ? 'button' : undefined}
-            whileHover={hoverable || onClick ? { y: -4, transition: { duration: 0.2 } } : {}}
-            initial={variant === 'artifact' ? { opacity: 0, scale: 0.95 } : {}}
-            animate={{ opacity: 1, scale: 1 }}
+            whileHover={whileHover || (hoverable || onClick ? { y: -4, transition: { duration: 0.2 } } : {})}
+            whileTap={whileTap}
+            initial={initial || (variant === 'artifact' ? { opacity: 0, scale: 0.95 } : {})}
+            animate={animate || { opacity: 1, scale: 1 }}
+            transition={transition}
+            exit={exit}
+            variants={variants}
+            {...safeProps}
         >
             {children}
         </motion.div>
