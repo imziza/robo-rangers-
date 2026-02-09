@@ -491,6 +491,74 @@
     line-height: 1.6;
 }
 
+.hypothesesGrid {
+    display: grid;
+    grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+    gap: var(--space-6);
+    margin-top: var(--space-4);
+}
+
+.hypothesisCard {
+    background: var(--bg-darker);
+    border: 1px solid var(--border-color);
+    padding: var(--space-6);
+    border-radius: var(--radius-lg);
+    transition: all 0.3s ease;
+}
+
+.hypothesisCard:hover {
+    border-color: var(--gold-muted);
+    background: var(--bg-card-hover);
+}
+
+.hypothesisHeader {
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+    margin-bottom: var(--space-4);
+    gap: var(--space-4);
+}
+
+.hypothesisTitle {
+    font-family: var(--font-heading);
+    font-size: 14px;
+    color: var(--text-primary);
+    line-height: 1.4;
+}
+
+.credibilityBadge {
+    font-size: 8px;
+    font-weight: 800;
+    padding: 2px 6px;
+    border-radius: 4px;
+    letter-spacing: 0.1em;
+    white-space: nowrap;
+}
+
+.credibilityBadge.high {
+    background: var(--status-stable-bg);
+    color: var(--status-stable);
+    border: 1px solid rgba(34, 197, 94, 0.3);
+}
+
+.credibilityBadge.medium {
+    background: var(--status-pending-bg);
+    color: var(--status-pending);
+    border: 1px solid rgba(245, 158, 11, 0.3);
+}
+
+.credibilityBadge.low {
+    background: var(--status-critical-bg);
+    color: var(--status-critical);
+    border: 1px solid rgba(239, 68, 68, 0.3);
+}
+
+.hypothesisDesc {
+    font-size: 13px;
+    color: var(--text-secondary);
+    line-height: 1.6;
+}
+
 .scholarlyInsights {
     background: var(--bg-darker);
     border: 1px dashed var(--gold-muted);

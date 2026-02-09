@@ -58,7 +58,8 @@ export default function AnalysisPage() {
     const startAnalysis = async () => {
         if (images.length === 0) return;
         setIsAnalyzing(true); setAnalysisProgress(0);
-        const progressInterval = setInterval(() => setAnalysisProgress(prev => prev >= 98 ? prev : prev + Math.random() * 2), 1000);
+        // Deterministic progress: 2% per second until 98%
+        const progressInterval = setInterval(() => setAnalysisProgress(prev => prev >= 98 ? prev : prev + 2), 1000);
         try {
             const { data: { user } } = await supabase.auth.getUser();
             const imageBase64s = await Promise.all(images.map(img => new Promise<string>((resolve, reject) => {
@@ -182,7 +183,7 @@ export default function AnalysisPage() {
                                                 transition={{ duration: 2, repeat: Infinity, delay: i * 0.4 }}
                                                 className={styles.streamLine}
                                             >
-                                                {`> 0x${Math.random().toString(16).slice(2, 10).toUpperCase()} - EXTRACTING METADATA...`}
+                                                {`> 0x${(1000000 + i * 12345).toString(16).toUpperCase()} - EXTRACTING METADATA...`}
                                             </motion.div>
                                         ))}
                                     </div>

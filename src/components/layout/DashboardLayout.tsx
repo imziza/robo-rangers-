@@ -26,6 +26,7 @@ import {
 } from 'lucide-react';
 import { NeuralSidebar } from './NeuralSidebar';
 import { CommandPalette } from '@/components/ui/CommandPalette';
+import { MissionStart } from '@/components/ui/MissionStart';
 import styles from './DashboardLayout.module.css';
 
 interface DashboardLayoutProps {
@@ -80,6 +81,7 @@ export function DashboardLayout({ children }: DashboardLayoutProps) {
 
     return (
         <div className={styles.container}>
+            <MissionStart onComplete={() => {}} />
             <CommandPalette />
             {/* Sidebar */}
             {/* Neural Ribbon Sidebar */}

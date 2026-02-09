@@ -1,7 +1,7 @@
 'use client';
 
 import { useEffect, useRef, useState, useMemo } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, useSearchParams } from 'next/navigation';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { createSupabaseBrowserClient } from '@/lib/supabase';
@@ -59,6 +59,7 @@ const ERAS = [
 
 export default function AtlasPage() {
     const router = useRouter();
+    const searchParams = useSearchParams();
     const mapContainer = useRef<HTMLDivElement>(null);
     const map = useRef<maplibregl.Map | null>(null);
 
@@ -106,6 +107,21 @@ export default function AtlasPage() {
     useEffect(() => {
         loadData();
     }, []);
+
+    // Handle deep-link navigation from Vault
+    useEffect(() => {
+        if (!map.current) return;
+        const lat = searchParams.get('lat');
+        const lng = searchParams.get('lng');
+        if (lat && lng) {
+            map.current.flyTo({
+                center: [parseFloat(lng), parseFloat(lat)],
+                zoom: 14,
+                essential: true,
+                duration: 3000
+            });
+        }
+    }, [searchParams, artifacts]); // Wait for artifacts to load too just in case
 
     const loadData = async () => {
         const supabase = createSupabaseBrowserClient();
@@ -501,7 +517,18 @@ export default function AtlasPage() {
                     <div className={styles.chronoHeader}>
                         <div className={styles.currentEraDisplay}>
                             <span className={styles.eraLabel}>CURRENT TEMPORAL ZONE</span>
-                            <span style={{ fontSize: 14, color: 'var(--text-secondary)' }}>{currentEra.name}</span>
+                            <AnimatePresence mode="wait">
+                                <motion.span
+                                    key={currentEra.name}
+                                    initial={{ opacity: 0, y: 10 }}
+                                    animate={{ opacity: 1, y: 0 }}
+                                    exit={{ opacity: 0, y: -10 }}
+                                    transition={{ duration: 0.4 }}
+                                    style={{ fontSize: 14, color: 'var(--text-secondary)', display: 'block' }}
+                                >
+                                    {currentEra.name}
+                                </motion.span>
+                            </AnimatePresence>
                         </div>
                         <div className={styles.yearDisplay}>
                             {Math.abs(viewYear)}

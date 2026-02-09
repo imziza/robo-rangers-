@@ -140,25 +140,28 @@
 
 /* 3. AMBIENT MODE ("Bioluminescent") */
 [data-theme='ambient'] {
-  --bg-main: #050B14;
-  /* Deep Ocean */
-  --bg-darker: #020408;
-  --bg-card: rgba(13, 22, 35, 0.5);
-  --bg-card-hover: rgba(28, 41, 59, 0.6);
-  --bg-elevated: rgba(30, 41, 59, 0.7);
-  --bg-input: rgba(5, 11, 20, 0.5);
+  --bg-main: #02060C;
+  /* Ultra Deep Blue */
+  --bg-darker: #000205;
+  --bg-card: rgba(13, 22, 35, 0.4);
+  --bg-card-hover: rgba(28, 41, 59, 0.5);
+  --bg-elevated: rgba(30, 41, 59, 0.6);
+  --bg-input: rgba(5, 11, 20, 0.4);
 
-  --text-primary: #E2E8F0;
-  --text-secondary: #94A3B8;
-  --text-tertiary: #475569;
+  --text-primary: #F8FAFC;
+  --text-secondary: #CBD5E1;
+  --text-tertiary: #64748B;
 
-  --border-color: rgba(201, 162, 39, 0.15);
-  /* Gold tint */
-  --shadow-base: 0 0 20px rgba(5, 10, 20, 0.8);
-  --shadow-elevated: 0 0 40px rgba(201, 162, 39, 0.1);
+  --border-color: rgba(201, 162, 39, 0.25);
+  /* Brighter Gold tint */
+  --shadow-base: 0 0 30px rgba(0, 0, 0, 0.9);
+  --shadow-elevated: 0 0 60px rgba(201, 162, 39, 0.15);
 
-  --glass-bg: rgba(13, 22, 35, 0.4);
-  --glass-blur: 24px;
+  --glass-bg: rgba(13, 25, 45, 0.3);
+  --glass-blur: 32px;
+
+  --gold-primary: #EAB308;
+  /* Slightly more vibrant gold for ambient */
 }
 
 /* 4. MIDNIGHT GLASS ("Deep Void") */
