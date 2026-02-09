@@ -129,9 +129,175 @@
 
 /* ===== Main Content Area ===== */
 .mainContent {
+    display: grid;
+    grid-template-columns: 1fr;
+    gap: var(--space-8);
+    position: relative;
+    overflow: hidden;
+}
+
+.dossierDrawer {
+    position: fixed;
+    top: 100px;
+    right: 24px;
+    width: 360px;
+    bottom: 24px;
+    background: var(--bg-card);
+    backdrop-filter: blur(20px);
+    border: 1px solid var(--gold-muted);
+    border-radius: var(--radius-2xl);
+    padding: var(--space-8);
     display: flex;
     flex-direction: column;
     gap: var(--space-8);
+    z-index: 100;
+    box-shadow: -20px 0 50px rgba(0, 0, 0, 0.5);
+}
+
+.dossierHeader {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-2);
+}
+
+.dossierTop {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+.dossierLabel {
+    font-size: 10px;
+    font-weight: 700;
+    color: var(--gold-primary);
+    letter-spacing: 0.2em;
+}
+
+.closeDossier {
+    background: transparent;
+    border: none;
+    color: var(--text-tertiary);
+    cursor: pointer;
+    transition: color 0.2s;
+}
+
+.closeDossier:hover {
+    color: var(--text-primary);
+}
+
+.dossierTitle {
+    font-family: var(--font-heading);
+    font-size: var(--text-2xl);
+    color: var(--text-primary);
+    line-height: 1.2;
+}
+
+.integrityBadge {
+    display: flex;
+    align-items: center;
+    gap: 12px;
+}
+
+.integrityTrack {
+    flex: 1;
+    height: 4px;
+    background: var(--bg-darker);
+    border-radius: 2px;
+    overflow: hidden;
+}
+
+.integrityFill {
+    height: 100%;
+    background: var(--status-stable);
+    box-shadow: 0 0 10px var(--status-stable);
+}
+
+.integrityBadge span {
+    font-size: 10px;
+    font-weight: 800;
+    color: var(--status-stable);
+    letter-spacing: 0.05em;
+}
+
+.dossierContent {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-8);
+    overflow-y: auto;
+}
+
+.dossierSection {
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.sectionTitle {
+    font-size: 11px;
+    font-weight: 700;
+    color: var(--text-tertiary);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    text-transform: uppercase;
+    letter-spacing: 0.1em;
+}
+
+.dataGrid {
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: var(--space-4);
+}
+
+.dataItem {
+    display: flex;
+    flex-direction: column;
+    gap: 2px;
+}
+
+.dataLabel {
+    font-size: 9px;
+    color: var(--text-tertiary);
+}
+
+.dataValue {
+    font-size: 13px;
+    color: var(--text-secondary);
+    font-weight: 500;
+}
+
+.dataValue.stable { color: var(--status-stable); }
+.dataValue.critical { color: var(--status-critical); }
+.dataValue.pending { color: var(--status-pending); }
+
+.locationInfo {
+    background: var(--bg-darker);
+    padding: var(--space-4);
+    border-radius: var(--radius-lg);
+    display: flex;
+    flex-direction: column;
+    gap: var(--space-4);
+}
+
+.coordinates {
+    display: flex;
+    justify-content: space-between;
+    font-family: var(--font-ui);
+    font-size: 12px;
+    color: var(--gold-primary);
+    font-weight: 600;
+}
+
+.noLocation {
+    font-size: 12px;
+    color: var(--text-tertiary);
+    font-style: italic;
+}
+
+.dossierActions {
+    padding-top: var(--space-4);
+    border-top: 1px solid var(--border-color);
 }
 
 /* Header Re-Style with Panel integration */

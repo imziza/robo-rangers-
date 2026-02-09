@@ -23,6 +23,11 @@ export interface AIReport {
     geographicSignificance: string;
     originHypothesis: string;
     comparativeAnalysis: string;
+    scholarlyHypotheses: Array<{
+        title: string;
+        description: string;
+        credibility: 'High' | 'Medium' | 'Low';
+    }>;
     confidenceScore: number;
 }
 
@@ -118,6 +123,13 @@ The report MUST include:
   "geographicSignificance": "Where it might have been found",
   "originHypothesis": "Theory of how it arrived here",
   "comparativeAnalysis": "Similar known artifacts",
+  "scholarlyHypotheses": [
+    {
+      "title": "Short Hypothesis Title",
+      "description": "Detailed theoretical interpretation",
+      "credibility": "High"
+    }
+  ],
   "confidenceScore": 0.0-1.0
 }`;
 
@@ -192,6 +204,7 @@ async function executeAnalysis(prompt: string, images: string[], useFallback = f
             geographicSignificance: rawReport.geographicSignificance || 'Regional data pending.',
             originHypothesis: rawReport.originHypothesis || 'Hypothesis formation incomplete.',
             comparativeAnalysis: rawReport.comparativeAnalysis || 'No direct parallels found.',
+            scholarlyHypotheses: rawReport.scholarlyHypotheses || [],
             confidenceScore: computeConfidence(rawReport)
         };
 

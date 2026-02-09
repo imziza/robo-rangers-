@@ -7,13 +7,14 @@ import { motion, useMotionValue, useSpring, useTransform, AnimatePresence } from
 import { createSupabaseBrowserClient } from '@/lib/supabase';
 import {
     Database, Map as MapIcon, Microscope, Compass, Archive,
-    Users, MessageSquare, Plus, LogOut, Sparkles
+    Users, MessageSquare, Plus, LogOut, Sparkles, BarChart3
 } from 'lucide-react';
 import styles from './NeuralSidebar.module.css';
 
 // --- Configuration ---
 const NAV_ITEMS = [
     { id: 'vault', href: '/vault', label: 'Vault', icon: Database },
+    { id: 'intelligence', href: '/intelligence', label: 'Intelligence', icon: BarChart3 },
     { id: 'atlas', href: '/atlas', label: 'Arch-Atlas', icon: MapIcon },
     { id: 'analysis', href: '/analysis', label: 'Analysis', icon: Microscope },
     { id: 'discovery', href: '/discovery', label: 'Discovery', icon: Compass },

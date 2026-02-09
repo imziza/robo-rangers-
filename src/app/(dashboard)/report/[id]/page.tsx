@@ -19,6 +19,11 @@ interface AIReport {
     geographicSignificance: string;
     originHypothesis: string;
     comparativeAnalysis: string;
+    scholarlyHypotheses: Array<{
+        title: string;
+        description: string;
+        credibility: 'High' | 'Medium' | 'Low';
+    }>;
     confidenceScore: number;
     image_url?: string;
     image_urls?: string[]; // Added supporting plural
@@ -314,6 +319,25 @@ export default function ReportPage() {
                             {report.originHypothesis}
                         </div>
                     </section>
+
+                    {report.scholarlyHypotheses && report.scholarlyHypotheses.length > 0 && (
+                        <section className={styles.section}>
+                            <h2 className={styles.sectionHeading}>COMPETING SCHOLARLY HYPOTHESES</h2>
+                            <div className={styles.hypothesesGrid}>
+                                {report.scholarlyHypotheses.map((h, i) => (
+                                    <div key={i} className={styles.hypothesisCard}>
+                                        <div className={styles.hypothesisHeader}>
+                                            <h4 className={styles.hypothesisTitle}>{h.title}</h4>
+                                            <span className={`${styles.credibilityBadge} ${styles[h.credibility.toLowerCase()]}`}>
+                                                {h.credibility} PROBABILITY
+                                            </span>
+                                        </div>
+                                        <p className={styles.hypothesisDesc}>{h.description}</p>
+                                    </div>
+                                ))}
+                            </div>
+                        </section>
+                    )}
 
                     <section className={styles.section}>
                         <h2 className={styles.sectionHeading}>SCHOLARLY COMPARISONS</h2>

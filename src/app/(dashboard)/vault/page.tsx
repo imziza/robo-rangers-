@@ -7,7 +7,7 @@ import { createSupabaseBrowserClient } from '@/lib/supabase';
 import { ArtifactCard } from '@/components/ui/Card';
 import { Panel } from '@/components/ui/Panel';
 import { Button } from '@/components/ui/Button';
-import { Shield, Sparkles, Database, History, Zap, Filter, ChevronRight, Plus } from 'lucide-react';
+import { Shield, Sparkles, Database, History, Zap, Filter, ChevronRight, Plus, MapPin, X, Info } from 'lucide-react';
 import styles from './page.module.css';
 
 interface Artifact {
@@ -16,6 +16,8 @@ interface Artifact {
     classification: string | null;
     material: string | null;
     era: string | null;
+    latitude?: number | null;
+    longitude?: number | null;
     status: 'stable' | 'critical' | 'pending';
     confidence_score: number | null;
     created_at: string;
@@ -156,66 +158,95 @@ export default function VaultPage() {
 
             {/* Main Content */}
             <main className={styles.mainContent}>
-                <Panel
-                    variant="glass"
-                    padding="lg"
-                    elevation={2}
-                    className={styles.contentHeader}
-                >
-                    <div className={styles.activeAnalysis}>
-                        {selectedArtifact ? (
-                            <>
-                                <div className={styles.activeHeaderTop}>
-                                    <span className={styles.activeLabel}>Selected Specimen</span>
-                                    <span className={styles.headerDots}></span>
-                                    <div className={styles.headerIntegrity}>
-                                        <div className={styles.integrityBar}>
-                                            <motion.div
-                                                className={styles.integrityFill}
-                                                initial={{ width: 0 }}
-                                                animate={{ width: `${Math.round((selectedArtifact.confidence_score || 0) * 100)}%` }}
-                                            />
-                                        </div>
-                                        <span className={styles.integrityText}>{Math.round((selectedArtifact.confidence_score || 0) * 100)}% Integrity</span>
-                                    </div>
+                <AnimatePresence>
+                    {selectedArtifact && (
+                        <motion.aside
+                            className={styles.dossierDrawer}
+                            initial={{ x: 400, opacity: 0 }}
+                            animate={{ x: 0, opacity: 1 }}
+                            exit={{ x: 400, opacity: 0 }}
+                            transition={{ type: 'spring', damping: 25, stiffness: 200 }}
+                        >
+                            <div className={styles.dossierHeader}>
+                                <div className={styles.dossierTop}>
+                                    <span className={styles.dossierLabel}>SPECIMEN DOSSIER</span>
+                                    <button className={styles.closeDossier} onClick={() => setSelectedArtifact(null)}>
+                                        <X size={16} />
+                                    </button>
                                 </div>
-                                <h1 className={styles.activeTitle}>{selectedArtifact.title}</h1>
-
-                                <div className={styles.activeHeaderMeta}>
-                                    <div className={styles.metaGroup}>
-                                        <span className={styles.metaLabel}>ID</span>
-                                        <span className={styles.metaValue}>{selectedArtifact.id.slice(0, 8)}</span>
+                                <h2 className={styles.dossierTitle}>{selectedArtifact.title}</h2>
+                                <div className={styles.integrityBadge}>
+                                    <div className={styles.integrityTrack}>
+                                        <motion.div
+                                            className={styles.integrityFill}
+                                            initial={{ width: 0 }}
+                                            animate={{ width: `${Math.round((selectedArtifact.confidence_score || 0) * 100)}%` }}
+                                        />
                                     </div>
-                                    <div className={styles.metaDivider} />
-                                    <div className={styles.metaGroup}>
-                                        <span className={styles.metaLabel}>Era</span>
-                                        <span className={styles.metaValue}>{selectedArtifact.era || 'Pending Analysis'}</span>
-                                    </div>
-                                    <div className={styles.metaDivider} />
-                                    <div className={styles.metaGroup}>
-                                        <span className={styles.metaLabel}>Domain</span>
-                                        <span className={styles.metaValue}>{selectedArtifact.material || 'Unclassified'}</span>
-                                    </div>
+                                    <span>{Math.round((selectedArtifact.confidence_score || 0) * 100)}% FIDELITY</span>
                                 </div>
-                            </>
-                        ) : (
-                            <div className={styles.emptyHeader}>
-                                <h1 className={styles.activeTitle}>Select an Artifact</h1>
-                                <p className={styles.emptySub}>Choose a specimen from the grid to view details.</p>
                             </div>
-                        )}
-                    </div>
-                    <Button
-                        variant="primary"
-                        disabled={!selectedArtifact}
-                        onClick={() => selectedArtifact && router.push(`/report/${selectedArtifact.id}`)}
-                        onMouseEnter={() => selectedArtifact && router.prefetch(`/report/${selectedArtifact.id}`)}
-                        rightIcon={<ChevronRight size={16} />}
-                        className={styles.viewDossierBtn}
-                    >
-                        View Dossier
-                    </Button>
-                </Panel>
+
+                            <div className={styles.dossierContent}>
+                                <div className={styles.dossierSection}>
+                                    <h3 className={styles.sectionTitle}><Info size={14} /> TECHNICAL DATA</h3>
+                                    <div className={styles.dataGrid}>
+                                        <div className={styles.dataItem}>
+                                            <span className={styles.dataLabel}>ERA / PERIOD</span>
+                                            <span className={styles.dataValue}>{selectedArtifact.era || 'PENDING'}</span>
+                                        </div>
+                                        <div className={styles.dataItem}>
+                                            <span className={styles.dataLabel}>MATERIAL</span>
+                                            <span className={styles.dataValue}>{selectedArtifact.material || 'UNCLASSIFIED'}</span>
+                                        </div>
+                                        <div className={styles.dataItem}>
+                                            <span className={styles.dataLabel}>IDENTIFIER</span>
+                                            <span className={styles.dataValue}>{selectedArtifact.id.slice(0, 8).toUpperCase()}</span>
+                                        </div>
+                                        <div className={styles.dataItem}>
+                                            <span className={styles.dataLabel}>STATUS</span>
+                                            <span className={`${styles.dataValue} ${styles[selectedArtifact.status]}`}>{selectedArtifact.status.toUpperCase()}</span>
+                                        </div>
+                                    </div>
+                                </div>
+
+                                <div className={styles.dossierSection}>
+                                    <h3 className={styles.sectionTitle}><MapPin size={14} /> GEOSPATIAL LOCK</h3>
+                                    {selectedArtifact.latitude ? (
+                                        <div className={styles.locationInfo}>
+                                            <div className={styles.coordinates}>
+                                                <span>LAT: {selectedArtifact.latitude.toFixed(4)}°</span>
+                                                <span>LNG: {selectedArtifact.longitude?.toFixed(4)}°</span>
+                                            </div>
+                                            <Button
+                                                variant="outline"
+                                                size="sm"
+                                                fullWidth
+                                                leftIcon={<MapPin size={14} />}
+                                                onClick={() => router.push(`/atlas?lat=${selectedArtifact.latitude}&lng=${selectedArtifact.longitude}`)}
+                                            >
+                                                Fly to Discovery Site
+                                            </Button>
+                                        </div>
+                                    ) : (
+                                        <p className={styles.noLocation}>No geospatial data locked for this specimen.</p>
+                                    )}
+                                </div>
+                            </div>
+
+                            <div className={styles.dossierActions}>
+                                <Button
+                                    variant="primary"
+                                    fullWidth
+                                    onClick={() => router.push(`/report/${selectedArtifact.id}`)}
+                                    rightIcon={<ChevronRight size={16} />}
+                                >
+                                    Open Full Dossier
+                                </Button>
+                            </div>
+                        </motion.aside>
+                    )}
+                </AnimatePresence>
 
                 <motion.div
                     className={styles.artifactGrid}

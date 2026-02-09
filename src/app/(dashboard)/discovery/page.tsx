@@ -1,9 +1,11 @@
 'use client';
 
 import { useState, useEffect, useRef } from 'react';
-import { Search, Compass, Shield, ArrowRight, X } from 'lucide-react';
+import { Search, Compass, Shield, ArrowRight, X, Database } from 'lucide-react';
 import { Button } from '@/components/ui/Button';
 import { SkeletonCard } from '@/components/ui/Skeleton';
+import { createSupabaseBrowserClient } from '@/lib/supabase';
+import { useToast } from '@/components/ui/Toast';
 import styles from './page.module.css';
 
 interface SimilarArtifact {
@@ -22,10 +24,12 @@ interface SimilarArtifact {
 }
 
 export default function DiscoveryPage() {
+    const { showToast } = useToast();
     const [results, setResults] = useState<SimilarArtifact[]>([]);
     const [selectedArtifact, setSelectedArtifact] = useState<SimilarArtifact | null>(null);
     const [confidenceThreshold, setConfidenceThreshold] = useState(65);
     const [isLoading, setIsLoading] = useState(false);
+    const [isSaving, setIsSaving] = useState(false);
     const [searchQuery, setSearchQuery] = useState('Egyptian funerary masks');
     const [showModal, setShowModal] = useState(false);
     const resultsContainerRef = useRef<HTMLDivElement>(null);
@@ -65,6 +69,75 @@ export default function DiscoveryPage() {
             console.error('Search error:', err);
         } finally {
             setIsLoading(false);
+        }
+    };
+
+    const saveToVault = async (artifact: SimilarArtifact) => {
+        setIsSaving(true);
+        try {
+            const supabase = createSupabaseBrowserClient();
+            const { data: { user } } = await supabase.auth.getUser();
+
+            if (!user) {
+                showToast('Authentication required to save specimens.', 'error');
+                return;
+            }
+
+            const artifactData = {
+                user_id: user.id,
+                title: artifact.title,
+                classification: artifact.objectType,
+                material: artifact.material,
+                era: artifact.era,
+                region: artifact.region,
+                status: 'stable',
+                confidence_score: artifact.matchScore,
+                ai_report: {
+                    source: artifact.source,
+                    original_url: artifact.url,
+                    description: artifact.description,
+                    discovery_date: new Date().toISOString()
+                }
+            };
+
+            const { data, error } = await supabase
+                .from('artifacts')
+                .insert([artifactData])
+                .select();
+
+            if (error) throw error;
+
+            const newId = data[0].id;
+
+            if (artifact.imageUrl) {
+                await supabase.from('artifact_images').insert([{
+                    artifact_id: newId,
+                    image_url: artifact.imageUrl,
+                    is_primary: true
+                }]);
+            }
+
+            // Sync with local storage
+            const localCatalog = JSON.parse(localStorage.getItem('vault_catalog') || '[]');
+            const localArtifact = {
+                id: newId,
+                title: artifact.title,
+                classification: artifact.objectType,
+                material: artifact.material,
+                era: artifact.era,
+                status: 'stable',
+                confidence_score: artifact.matchScore,
+                image_url: artifact.imageUrl,
+                created_at: new Date().toISOString()
+            };
+            localStorage.setItem('vault_catalog', JSON.stringify([localArtifact, ...localCatalog]));
+
+            showToast(`Specimen ${artifact.title} secured in Vault.`, 'success');
+        } catch (err: any) {
+            console.error('Save error:', err);
+            showToast(`Archive failure: ${err.message}`, 'error');
+        } finally {
+            setIsSaving(false);
         }
     };
 
@@ -217,14 +290,25 @@ export default function DiscoveryPage() {
                             <button className={styles.tab}>AI Core Notes</button>
                         </div>
 
-                        <Button
-                            variant="primary"
-                            fullWidth
-                            onClick={() => setShowModal(true)}
-                            rightIcon={<ArrowRight size={14} />}
-                        >
-                            Investigate Global Archive Record
-                        </Button>
+                        <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                            <Button
+                                variant="primary"
+                                fullWidth
+                                onClick={() => setShowModal(true)}
+                                rightIcon={<ArrowRight size={14} />}
+                            >
+                                Investigate Global Archive Record
+                            </Button>
+                            <Button
+                                variant="outline"
+                                fullWidth
+                                isLoading={isSaving}
+                                onClick={() => saveToVault(selectedArtifact)}
+                                leftIcon={<Database size={14} />}
+                            >
+                                Secure to Personal Vault
+                            </Button>
+                        </div>
                     </aside>
                 )}
             </div>
